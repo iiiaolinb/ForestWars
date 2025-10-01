@@ -22,9 +22,12 @@ struct Constants {
     // MARK: - Label Properties
     struct Label {
         static let fontSize: CGFloat = 16
-        static let topMargin: CGFloat = 8
-        static let leadingMargin: CGFloat = 8
-        static let maxWidthMultiplier: CGFloat = 0.4
+        static let fontSizeMultiplier: CGFloat = 0.15 // Размер шрифта как доля от размера кнопки
+        static let minFontSize: CGFloat = 8
+        static let maxFontSize: CGFloat = 20
+        static let topMargin: CGFloat = 4
+        static let leadingMargin: CGFloat = 4
+        static let maxWidthMultiplier: CGFloat = 0.35
     }
     
     // MARK: - Image Properties
@@ -87,6 +90,38 @@ struct Constants {
     struct Layout {
         static let stackViewSpacing: CGFloat = 20
         static let stackViewMargin: CGFloat = 20
+    }
+    
+    // MARK: - Game Field Properties
+    struct GameField {
+        static let gridWidth: Int = 5
+        static let gridHeight: Int = 10
+        static let cellSpacing: CGFloat = 8
+        static let fieldMargin: CGFloat = 20
+        
+        // Отступы от safe area
+        static let topMargin: CGFloat = 20
+        static let bottomMargin: CGFloat = 100 // Место для таб бара + кнопка
+        static let horizontalMargin: CGFloat = 20
+        
+        // Метод для расчета размера кнопки на основе доступного пространства
+        static func calculateButtonSize(for screenSize: CGSize) -> CGFloat {
+            let availableWidth = screenSize.width - (horizontalMargin * 2)
+            let availableHeight = screenSize.height - topMargin - bottomMargin
+            
+            // Рассчитываем размер кнопки с учетом промежутков между ячейками
+            let horizontalSpacing = CGFloat(gridWidth - 1) * cellSpacing
+            let verticalSpacing = CGFloat(gridHeight - 1) * cellSpacing
+            
+            let maxButtonWidth = (availableWidth - horizontalSpacing) / CGFloat(gridWidth)
+            let maxButtonHeight = (availableHeight - verticalSpacing) / CGFloat(gridHeight)
+            
+            // Выбираем минимальный размер для квадратных кнопок
+            let buttonSize = min(maxButtonWidth, maxButtonHeight)
+            
+            // Проверяем, что размер кнопки не отрицательный
+            return max(buttonSize, 20) // Минимальный размер 20pt
+        }
     }
     
     // MARK: - Text Properties

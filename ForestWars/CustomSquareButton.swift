@@ -52,6 +52,8 @@ class CustomSquareButton: UIView {
         label.textColor = .darkGray // Будет обновлен в updateTextColor()
         label.font = UIFont.boldSystemFont(ofSize: Constants.Label.fontSize)
         label.textAlignment = .left
+        label.adjustsFontSizeToFitWidth = true
+        label.minimumScaleFactor = 0.5
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -110,6 +112,11 @@ class CustomSquareButton: UIView {
         
         // Устанавливаем начальную прозрачность картинки
         centerImageView.alpha = Constants.Image.normalAlpha
+    }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        updateFontSize()
     }
     
     private func setupConstraints() {
@@ -245,5 +252,13 @@ class CustomSquareButton: UIView {
         guard isShaking else { return }
         isShaking = false
         layer.removeAnimation(forKey: "shaking")
+    }
+    
+    private func updateFontSize() {
+        let buttonSize = min(bounds.width, bounds.height)
+        let calculatedFontSize = buttonSize * Constants.Label.fontSizeMultiplier
+        let clampedFontSize = max(Constants.Label.minFontSize, min(calculatedFontSize, Constants.Label.maxFontSize))
+        
+        numberLabel.font = UIFont.boldSystemFont(ofSize: clampedFontSize)
     }
 }
