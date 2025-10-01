@@ -10,18 +10,17 @@ import UIKit
 class ViewController: UIViewController {
     
     // MARK: - Properties
-    private let enemyButton = CustomSquareButton()
-    private let allyButton = CustomSquareButton()
-    private let neutralButton = CustomSquareButton()
+    private let gameFieldView = GameFieldView()
     
-    private let stackView: UIStackView = {
-        let stack = UIStackView()
-        stack.axis = .horizontal
-        stack.distribution = .equalSpacing
-        stack.alignment = .center
-        stack.spacing = Constants.Layout.stackViewSpacing
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        return stack
+    private let resetButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Сбросить поле", for: .normal)
+        button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 18)
+        button.backgroundColor = .systemOrange
+        button.setTitleColor(.white, for: .normal)
+        button.layer.cornerRadius = 12
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
     }()
 
     override func viewDidLoad() {
@@ -33,46 +32,46 @@ class ViewController: UIViewController {
     private func setupUI() {
         view.backgroundColor = .systemBackground
         
-        // Настройка кнопок
-        setupButton(enemyButton, type: .enemy, number: Constants.CellType.enemyNumber, imageName: Constants.SystemImages.enemy)
-        setupButton(allyButton, type: .ally, number: Constants.CellType.allyNumber, imageName: Constants.SystemImages.ally)
-        setupButton(neutralButton, type: .neutral, number: Constants.CellType.neutralNumber, imageName: Constants.SystemImages.neutral)
+        // Настройка игрового поля
+        gameFieldView.delegate = self
+        gameFieldView.translatesAutoresizingMaskIntoConstraints = false
+        gameFieldView.backgroundColor = .lightGray
         
-        // Настройка stack view
-        stackView.addArrangedSubview(enemyButton)
-        stackView.addArrangedSubview(allyButton)
-        stackView.addArrangedSubview(neutralButton)
+        // Настройка кнопки сброса
+        resetButton.addTarget(self, action: #selector(resetButtonTapped), for: .touchUpInside)
         
-        view.addSubview(stackView)
+        // Добавление subviews
+        view.addSubview(gameFieldView)
+        view.addSubview(resetButton)
         
-        // Constraints для центрирования stack view
+        // Constraints
         NSLayoutConstraint.activate([
-            stackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            stackView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            stackView.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: Constants.Layout.stackViewMargin),
-            stackView.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -Constants.Layout.stackViewMargin)
+            // Игровое поле с фиксированными отступами
+            gameFieldView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: Constants.GameField.topMargin),
+            gameFieldView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: Constants.GameField.horizontalMargin),
+            gameFieldView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -Constants.GameField.horizontalMargin),
+            gameFieldView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -Constants.GameField.bottomMargin),
+            
+            // Кнопка сброса под полем
+            resetButton.topAnchor.constraint(equalTo: gameFieldView.bottomAnchor, constant: 20),
+            resetButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            resetButton.widthAnchor.constraint(equalToConstant: 200),
+            resetButton.heightAnchor.constraint(equalToConstant: 50)
         ])
     }
     
-    private func setupButton(_ button: CustomSquareButton, type: CellType, number: String, imageName: String) {
-        button.delegate = self
-        button.cellType = type
-        button.setNumber(number)
-        button.setImage(UIImage(systemName: imageName))
-        button.translatesAutoresizingMaskIntoConstraints = false
-        
-        NSLayoutConstraint.activate([
-            button.widthAnchor.constraint(equalToConstant: Constants.Button.size),
-            button.heightAnchor.constraint(equalToConstant: Constants.Button.size)
-        ])
+    // MARK: - Actions
+    @objc private func resetButtonTapped() {
+        gameFieldView.resetField()
+        print("Поле сброшено!")
     }
 }
 
-// MARK: - CustomSquareButtonDelegate
-extension ViewController: CustomSquareButtonDelegate {
-    func customSquareButtonTapped(_ button: CustomSquareButton) {
+// MARK: - GameFieldViewDelegate
+extension ViewController: GameFieldViewDelegate {
+    func gameFieldCellTapped(at row: Int, column: Int, cell: CustomSquareButton) {
         let typeString: String
-        switch button.cellType {
+        switch cell.cellType {
         case .enemy:
             typeString = Constants.Text.enemyType
         case .ally:
@@ -81,8 +80,12 @@ extension ViewController: CustomSquareButtonDelegate {
             typeString = Constants.Text.neutralType
         }
         
-        let stateString = button.isSelected ? Constants.Text.selectedState : Constants.Text.deselectedState
-        print("Кнопка \(stateString)! Тип: \(typeString), Номер: \(button.getNumber())")
+        let stateString = cell.isSelected ? Constants.Text.selectedState : Constants.Text.deselectedState
+        print("Ячейка [\(row), \(column)] \(stateString)! Тип: \(typeString), Номер: \(cell.getNumber())")
+        
+        // Показываем информацию о выбранных ячейках
+        let selectedCells = gameFieldView.getSelectedCells()
+        print("Всего выбрано ячеек: \(selectedCells.count)")
     }
 }
 
