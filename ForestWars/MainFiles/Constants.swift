@@ -17,6 +17,24 @@ struct Constants {
         static let shadowRadius: CGFloat = 4
         static let shadowOpacity: Float = 0.3
         static let shadowOpacityPressed: Float = 0.1
+        
+        // ButtonAssistent properties - System Style
+        static let height: CGFloat = 50
+        static let textColor = UIColor.label
+        static let font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        static let minimumScaleFactor: CGFloat = 0.5
+        
+        // Icon properties
+        static let iconSize: CGFloat = 24
+        static let iconLeadingMargin: CGFloat = 16
+        
+        // Text properties
+        static let textLeadingMargin: CGFloat = 12
+        static let textTrailingMargin: CGFloat = 16
+        
+        // Animation properties
+        static let animationDuration: TimeInterval = 0.1
+        static let pressScale: CGFloat = 0.95
     }
     
     // MARK: - Label Properties
@@ -45,6 +63,10 @@ struct Constants {
         static let buttonBackgroundPressed = UIColor.systemBlue.withAlphaComponent(0.7)
         static let borderNormal = UIColor.clear
         static let shadow = UIColor.black
+        
+        // Game buttons colors
+        static let resetButtonColor = UIColor.systemOrange
+        static let closeButtonColor = UIColor.systemRed
     }
     
     // MARK: - Glow Effect Properties
@@ -77,6 +99,10 @@ struct Constants {
         static let enemy = "flame.fill"
         static let ally = "leaf.fill"
         static let neutral = "questionmark.circle.fill"
+        
+        // Game buttons icons
+        static let resetIcon = "arrow.clockwise"
+        static let closeIcon = "xmark.circle.fill"
     }
     
     // MARK: - Cell Type Properties
@@ -90,6 +116,14 @@ struct Constants {
     struct Layout {
         static let stackViewSpacing: CGFloat = 20
         static let stackViewMargin: CGFloat = 20
+    }
+    
+    // MARK: - Game Buttons Properties
+    struct GameButtons {
+        static let width: CGFloat = 150
+        static let height: CGFloat = 50
+        static let topMargin: CGFloat = 20
+        static let horizontalMargin: CGFloat = 40
     }
     
     // MARK: - Game Field Properties
@@ -132,5 +166,9 @@ struct Constants {
         static let neutralType = "Нейтральный"
         static let selectedState = "ВЫБРАНА"
         static let deselectedState = "ОТМЕНЕНА"
+        
+        // Game buttons titles
+        static let resetButtonTitle = "Reset"
+        static let closeButtonTitle = "Close"
     }
 }
