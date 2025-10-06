@@ -10,7 +10,9 @@ import UIKit
 class GameScreenVC: UIViewController {
     
     // MARK: - Properties
+    private let viewModel = GameScreenVM()
     private let gameFieldView = GameFieldView()
+    private var isGameFieldInitialized = false
     
     private let resetButton: ButtonAssistent = {
         let button = ButtonAssistent(
@@ -35,16 +37,30 @@ class GameScreenVC: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        setupViewModel()
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        // Инициализируем игровое поле после того, как GameFieldView создаст ячейки
+        if !isGameFieldInitialized && gameFieldView.getCell(at: 0, column: 0) != nil {
+            viewModel.initializeGameField()
+            isGameFieldInitialized = true
+        }
     }
     
     // MARK: - Setup
+    private func setupViewModel() {
+        viewModel.delegate = self
+    }
+    
     private func setupUI() {
         view.backgroundColor = .systemBackground
         
         // Настройка игрового поля
         gameFieldView.delegate = self
         gameFieldView.translatesAutoresizingMaskIntoConstraints = false
-        gameFieldView.backgroundColor = .lightGray
+        gameFieldView.backgroundColor = .clear
         
         // Настройка кнопок
         resetButton.addTarget(self, action: #selector(resetButtonTapped), for: .touchUpInside)
@@ -77,7 +93,7 @@ class GameScreenVC: UIViewController {
     
     // MARK: - Actions
     @objc private func resetButtonTapped() {
-        gameFieldView.resetField()
+        viewModel.resetField()
         print("Field reset!")
     }
     
@@ -101,22 +117,47 @@ class GameScreenVC: UIViewController {
 // MARK: - GameFieldViewDelegate
 extension GameScreenVC: GameFieldViewDelegate {
     func gameFieldCellTapped(at row: Int, column: Int, cell: CustomSquareButton) {
-        let typeString: String
-        switch cell.cellType {
-        case .enemy:
-            typeString = Constants.Text.enemyType
-        case .ally:
-            typeString = Constants.Text.allyType
-        case .neutral:
-            typeString = Constants.Text.neutralType
+        // Передаем событие в ViewModel
+        viewModel.cellTapped(at: row, column: column)
+    }
+}
+
+// MARK: - GameScreenVMDelegate
+extension GameScreenVC: GameScreenVMDelegate {
+    func didUpdateCell(at row: Int, column: Int, cellType: CellType, number: String, imageName: String) {
+        // Обновляем UI ячейки через GameFieldView
+        if let cell = gameFieldView.getCell(at: row, column: column) {
+            cell.cellType = cellType
+            cell.setNumber(number)
+            cell.setImage(named: imageName)
+        } else {
+            print("GameScreenVC: Ячейка [\(row), \(column)] еще не создана, пропускаем обновление")
         }
-        
-        let stateString = cell.isSelected ? Constants.Text.selectedState : Constants.Text.deselectedState
-        print("Ячейка [\(row), \(column)] \(stateString)! Тип: \(typeString), Номер: \(cell.getNumber())")
-        
-        // Показываем информацию о выбранных ячейках
-        let selectedCells = gameFieldView.getSelectedCells()
-        print("Всего выбрано ячеек: \(selectedCells.count)")
+    }
+    
+    func didUpdateCellSelection(at row: Int, column: Int, isSelected: Bool) {
+        // Обновляем состояние выбора ячейки
+        if let cell = gameFieldView.getCell(at: row, column: column) {
+            cell.isSelected = isSelected
+        }
+    }
+    
+    func didResetField() {
+        // Сбрасываем поле через GameFieldView
+        gameFieldView.resetField()
+    }
+    
+    func didSelectCell(at row: Int, column: Int, cellType: CellType, number: String, isSelected: Bool) {
+        // Убрали индивидуальные логи - теперь используется только общий вывод в didUpdateSelectedCellsCount
+    }
+    
+    func didUpdateSelectedCellsCount(_ count: Int) {
+        if count == 0 {
+            print("Нет выбранных ячеек")
+        } else {
+            print("Выбрано ячеек: \(count)")
+            print(viewModel.getSelectedCellsInfo())
+        }
     }
 }
 

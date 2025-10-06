@@ -31,15 +31,22 @@ class GameFieldView: UIView {
     // MARK: - Initialization
     override init(frame: CGRect) {
         super.init(frame: frame)
+        initializeCellsArray()
         setupView()
     }
     
     required init?(coder: NSCoder) {
         super.init(coder: coder)
+        initializeCellsArray()
         setupView()
     }
     
     // MARK: - Setup
+    private func initializeCellsArray() {
+        // Инициализируем пустой массив ячеек
+        cells = []
+    }
+    
     private func setupView() {
         backgroundColor = .clear
         addSubview(stackView)
@@ -81,11 +88,11 @@ class GameFieldView: UIView {
                 cell.delegate = self
                 cell.translatesAutoresizingMaskIntoConstraints = false
                 
-                // Устанавливаем случайный тип ячейки
-                let cellType = getRandomCellType()
-                cell.cellType = cellType
-                cell.setNumber(getNumberForCellType(cellType))
-                cell.setImage(named: getImageNameForCellType(cellType))
+                // Инициализируем ячейку с дефолтными значениями
+                // Данные будут установлены через GameScreenVM
+                cell.cellType = .neutral
+                cell.setNumber(Constants.CellType.neutralNumber)
+                cell.setImage(named: Constants.SystemImages.neutral)
                 
                 // Сохраняем позицию в теге (row * width + column)
                 cell.tag = row * Constants.GameField.gridWidth + column
@@ -137,20 +144,20 @@ class GameFieldView: UIView {
     // MARK: - Public Methods
     func getCell(at row: Int, column: Int) -> CustomSquareButton? {
         guard row >= 0 && row < Constants.GameField.gridHeight &&
-              column >= 0 && column < Constants.GameField.gridWidth else {
+              column >= 0 && column < Constants.GameField.gridWidth &&
+              !cells.isEmpty && row < cells.count && column < cells[row].count else {
             return nil
         }
         return cells[row][column]
     }
     
     func resetField() {
+        // Сброс только визуального состояния ячеек
+        // Логика генерации новых ячеек теперь в ViewModel
         for row in 0..<Constants.GameField.gridHeight {
             for column in 0..<Constants.GameField.gridWidth {
                 let cell = cells[row][column]
                 cell.isSelected = false
-                cell.cellType = getRandomCellType()
-                cell.setNumber(getNumberForCellType(cell.cellType))
-                cell.setImage(named: getImageNameForCellType(cell.cellType))
             }
         }
     }
