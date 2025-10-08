@@ -87,6 +87,9 @@ struct Constants {
         static let shakeDuration: TimeInterval = 0.5
         static let shakeAmplitude: CGFloat = 5.0
         static let shakeValues: [CGFloat] = [-5.0, 5.0, -5.0, 5.0, -3.0, 3.0, -2.0, 2.0, 0.0]
+        
+        // Unit movement animation
+        static let unitMovementShakeDuration: TimeInterval = 0.5
     }
     
     // MARK: - Gesture Properties
@@ -107,9 +110,9 @@ struct Constants {
     
     // MARK: - Cell Type Properties
     struct CellType {
-        static let enemyNumber = "99"
-        static let allyNumber = "42"
-        static let neutralNumber = "15"
+        static let enemyNumber = 99
+        static let allyNumber = 42
+        static let neutralNumber = 15
     }
     
     // MARK: - Layout Properties

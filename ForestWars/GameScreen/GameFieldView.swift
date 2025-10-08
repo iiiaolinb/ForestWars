@@ -157,7 +157,7 @@ class GameFieldView: UIView {
         for row in 0..<Constants.GameField.gridHeight {
             for column in 0..<Constants.GameField.gridWidth {
                 let cell = cells[row][column]
-                cell.isSelected = false
+                cell.setSelected(false)
             }
         }
     }
@@ -183,16 +183,6 @@ class GameFieldView: UIView {
         return types.randomElement() ?? .neutral
     }
     
-    private func getNumberForCellType(_ type: CellType) -> String {
-        switch type {
-        case .enemy:
-            return Constants.CellType.enemyNumber
-        case .ally:
-            return Constants.CellType.allyNumber
-        case .neutral:
-            return Constants.CellType.neutralNumber
-        }
-    }
     
     private func getImageNameForCellType(_ type: CellType) -> String {
         switch type {

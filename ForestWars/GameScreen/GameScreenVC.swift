@@ -124,7 +124,7 @@ extension GameScreenVC: GameFieldViewDelegate {
 
 // MARK: - GameScreenVMDelegate
 extension GameScreenVC: GameScreenVMDelegate {
-    func didUpdateCell(at row: Int, column: Int, cellType: CellType, number: String, imageName: String) {
+    func didUpdateCell(at row: Int, column: Int, cellType: CellType, number: Int, imageName: String) {
         // Обновляем UI ячейки через GameFieldView
         if let cell = gameFieldView.getCell(at: row, column: column) {
             cell.cellType = cellType
@@ -138,7 +138,7 @@ extension GameScreenVC: GameScreenVMDelegate {
     func didUpdateCellSelection(at row: Int, column: Int, isSelected: Bool) {
         // Обновляем состояние выбора ячейки
         if let cell = gameFieldView.getCell(at: row, column: column) {
-            cell.isSelected = isSelected
+            cell.setSelected(isSelected)
         }
     }
     
@@ -147,7 +147,7 @@ extension GameScreenVC: GameScreenVMDelegate {
         gameFieldView.resetField()
     }
     
-    func didSelectCell(at row: Int, column: Int, cellType: CellType, number: String, isSelected: Bool) {
+    func didSelectCell(at row: Int, column: Int, cellType: CellType, number: Int, isSelected: Bool) {
         // Убрали индивидуальные логи - теперь используется только общий вывод в didUpdateSelectedCellsCount
     }
     
@@ -157,6 +157,23 @@ extension GameScreenVC: GameScreenVMDelegate {
         } else {
             print("Выбрано ячеек: \(count)")
             print(viewModel.getSelectedCellsInfo())
+        }
+    }
+    
+    func didStartUnitMovementAnimation(at row: Int, column: Int) {
+        if let cell = gameFieldView.getCell(at: row, column: column) {
+            cell.startUnitMovementAnimation()
+        }
+    }
+    
+    func didCompleteUnitMovement() {
+        // Останавливаем анимацию на всех ячейках
+        for row in 0..<Constants.GameField.gridHeight {
+            for column in 0..<Constants.GameField.gridWidth {
+                if let cell = gameFieldView.getCell(at: row, column: column) {
+                    cell.stopUnitMovementAnimation()
+                }
+            }
         }
     }
 }

@@ -148,8 +148,7 @@ class CustomSquareButton: UIView {
     
     // MARK: - Actions
     @objc private func buttonTapped() {
-        // Переключаем состояние при нажатии
-        isSelected.toggle()
+        // Сначала уведомляем делегата о нажатии, состояние изменится через ViewModel
         delegate?.customSquareButtonTapped(self)
     }
     
@@ -157,9 +156,8 @@ class CustomSquareButton: UIView {
         switch gesture.state {
         case .began:
             startShakingAnimation()
-            // Длительное нажатие переводит только из обычного состояния в нажатое
+            // Длительное нажатие - уведомляем делегата, состояние изменится через ViewModel
             if !isSelected {
-                isSelected = true
                 delegate?.customSquareButtonTapped(self)
             }
         case .ended:
@@ -172,8 +170,8 @@ class CustomSquareButton: UIView {
     }
     
     // MARK: - Public Methods
-    func setNumber(_ number: String) {
-        numberLabel.text = number
+    func setNumber(_ number: Int) {
+        numberLabel.text = String(number)
     }
     
     func setImage(_ image: UIImage?) {
@@ -184,8 +182,20 @@ class CustomSquareButton: UIView {
         centerImageView.image = UIImage(systemName: imageName)?.withRenderingMode(.alwaysTemplate)
     }
     
-    func getNumber() -> String {
-        return numberLabel.text ?? ""
+    func getNumber() -> Int {
+        return Int(numberLabel.text ?? "0") ?? 0
+    }
+    
+    func setSelected(_ selected: Bool) {
+        isSelected = selected
+    }
+    
+    func startUnitMovementAnimation() {
+        startUnitMovementShakingAnimation()
+    }
+    
+    func stopUnitMovementAnimation() {
+        stopShakingAnimation()
     }
     
     // MARK: - Private Methods
@@ -248,10 +258,23 @@ class CustomSquareButton: UIView {
         layer.add(animation, forKey: "shaking")
     }
     
+    private func startUnitMovementShakingAnimation() {
+        guard !isShaking else { return }
+        isShaking = true
+        
+        let animation = CAKeyframeAnimation(keyPath: "transform.translation.x")
+        animation.timingFunction = CAMediaTimingFunction(name: .linear)
+        animation.duration = Constants.Animation.unitMovementShakeDuration
+        animation.values = Constants.Animation.shakeValues
+        animation.repeatCount = 1 // Один раз для перемещения
+        layer.add(animation, forKey: "unitMovementShaking")
+    }
+    
     private func stopShakingAnimation() {
         guard isShaking else { return }
         isShaking = false
         layer.removeAnimation(forKey: "shaking")
+        layer.removeAnimation(forKey: "unitMovementShaking")
     }
     
     private func updateFontSize() {
