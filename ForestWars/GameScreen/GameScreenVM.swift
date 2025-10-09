@@ -271,9 +271,9 @@ class GameScreenVM {
     private func getNumberForCellType(_ type: CellType) -> Int {
         switch type {
         case .enemy:
-            return Constants.CellType.enemyNumber
+            return Int.random(in: 1...99)//Constants.CellType.enemyNumber
         case .ally:
-            return Constants.CellType.allyNumber
+            return Int.random(in: 1...99)//Constants.CellType.allyNumber
         case .neutral:
             return Int.random(in: 1...99)
         }
@@ -311,7 +311,7 @@ class GameScreenVM {
             let neighborUnitCount = getUnitCount(from: neighborCell.number)
             
             // Выделяем соседнюю ячейку только если количество юнитов меньше или равно центральной
-            if neighborUnitCount <= centralUnitCount {
+            if neighborUnitCount <= centralUnitCount || neighborCell.type == centralCell.type {
                 selectCell(at: neighborRow, column: neighborColumn)
             }
         }
@@ -395,7 +395,7 @@ class GameScreenVM {
             return sourceUnits + targetUnits
         case (.enemy, .ally), (.enemy, .neutral), (.ally, .enemy), (.ally, .neutral):
             // Если переходим в ячейку другого типа - вычитаем юнитов
-            return max(0, targetUnits - sourceUnits)
+            return max(0, sourceUnits - targetUnits)
         case (.neutral, _):
             // Нейтральные ячейки не могут быть источником перемещения
             return targetUnits
@@ -503,5 +503,3 @@ struct GameCell {
     }
 }
 
-//неправильно вычисляется количество при перемещении между ячейками разного типа
-//не выделяется ячейка одного типа, если в ней больше юнитов, чем в выбранной
