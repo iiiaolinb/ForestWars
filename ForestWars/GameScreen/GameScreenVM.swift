@@ -487,19 +487,3 @@ class GameScreenVM {
         }
     }
 }
-
-// MARK: - GameCell Model
-struct GameCell {
-    let type: CellType
-    let number: Int
-    let imageName: String
-    var isSelected: Bool
-    
-    init(type: CellType, number: Int, imageName: String, isSelected: Bool = false) {
-        self.type = type
-        self.number = number
-        self.imageName = imageName
-        self.isSelected = isSelected
-    }
-}
-

@@ -16,11 +16,11 @@ enum CellType {
     var textColor: UIColor {
         switch self {
         case .enemy:
-            return .systemRed
+            return Constants.Colors.mainEnemy
         case .ally:
-            return .systemGreen
+            return Constants.Colors.mainAlly
         case .neutral:
-            return .darkGray
+            return Constants.Colors.mainNeutrlal
         }
     }
 }

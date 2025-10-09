@@ -14,6 +14,11 @@ class GameScreenVC: UIViewController {
     private let gameFieldView = GameFieldView()
     private var isGameFieldInitialized = false
     
+    //MARK: - UI elements
+    
+    private let leftInfoStack = TopInfoLabelAssistent(infoLabelType: .ally)
+    private let rightInfoStack = TopInfoLabelAssistent(infoLabelType: .enemy)
+    
     private let resetButton: ButtonAssistent = {
         let button = ButtonAssistent(
             title: Constants.Text.resetButtonTitle,
@@ -38,6 +43,14 @@ class GameScreenVC: UIViewController {
         super.viewDidLoad()
         setupUI()
         setupViewModel()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        leftInfoStack.updateUnits(count: 999)
+        rightInfoStack.updateUnits(count: 999)
+        leftInfoStack.updateBuildings(count: 999)
+        rightInfoStack.updateBuildings(count: 999)
     }
     
     override func viewDidLayoutSubviews() {
@@ -67,14 +80,30 @@ class GameScreenVC: UIViewController {
         closeButton.addTarget(self, action: #selector(closeButtonTapped), for: .touchUpInside)
         
         // Добавление subviews
+        view.addSubview(leftInfoStack)
+        view.addSubview(rightInfoStack)
+        
         view.addSubview(gameFieldView)
         view.addSubview(resetButton)
         view.addSubview(closeButton)
         
+        leftInfoStack.translatesAutoresizingMaskIntoConstraints = false
+        rightInfoStack.translatesAutoresizingMaskIntoConstraints = false
+        
         // Constraints
         NSLayoutConstraint.activate([
+            leftInfoStack.topAnchor.constraint(equalTo: view.topAnchor, constant: Constants.InfoLabel.topMargin),
+            leftInfoStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: Constants.InfoLabel.horizontalMargin),
+            leftInfoStack.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 1/3),
+            leftInfoStack.heightAnchor.constraint(equalToConstant: Constants.InfoLabel.height),
+            
+            rightInfoStack.topAnchor.constraint(equalTo: view.topAnchor, constant: Constants.InfoLabel.topMargin),
+            rightInfoStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -Constants.InfoLabel.horizontalMargin),
+            rightInfoStack.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 1/3),
+            rightInfoStack.heightAnchor.constraint(equalToConstant: Constants.InfoLabel.height),
+            
             // Игровое поле с фиксированными отступами
-            gameFieldView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: Constants.GameField.topMargin),
+            gameFieldView.topAnchor.constraint(equalTo: leftInfoStack.bottomAnchor, constant: Constants.GameField.topMargin),
             gameFieldView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: Constants.GameField.horizontalMargin),
             gameFieldView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -Constants.GameField.horizontalMargin),
             gameFieldView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -Constants.GameField.bottomMargin),

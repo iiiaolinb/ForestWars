@@ -48,6 +48,16 @@ struct Constants {
         static let maxWidthMultiplier: CGFloat = 0.35
     }
     
+    struct InfoLabel {
+        static let titleFontSize: CGFloat = 14
+        static let countFontSize: CGFloat = 16
+        
+        static let topMargin: CGFloat = 20
+        static let horizontalMargin: CGFloat = 20
+        static let height: CGFloat = 40
+        static let spacing: CGFloat = 4
+    }
+    
     // MARK: - Image Properties
     struct Image {
         static let widthMultiplier: CGFloat = 0.4
@@ -59,6 +69,10 @@ struct Constants {
     
     // MARK: - Colors
     struct Colors {
+        static let mainAlly = UIColor.systemGreen
+        static let mainNeutrlal = UIColor.darkGray
+        static let mainEnemy = UIColor.systemRed
+        
         static let buttonBackground = UIColor.systemBlue
         static let buttonBackgroundPressed = UIColor.systemBlue.withAlphaComponent(0.7)
         static let borderNormal = UIColor.clear
@@ -106,6 +120,10 @@ struct Constants {
         // Game buttons icons
         static let resetIcon = "arrow.clockwise"
         static let closeIcon = "xmark.circle.fill"
+        
+        // Top info label icons
+        static let infoLabelIconLeft = "square.grid.3x3.fill"
+        static let infoLabelIconRight = "square.grid.3x3.fill"
     }
     
     // MARK: - Cell Type Properties
@@ -170,8 +188,10 @@ struct Constants {
         static let selectedState = "ВЫБРАНА"
         static let deselectedState = "ОТМЕНЕНА"
         
-        // Game buttons titles
         static let resetButtonTitle = "Reset"
         static let closeButtonTitle = "Close"
+        
+        static let topInfoLabelUnitsTitle = "Units:"
+        static let topInfoLabelBuildingsTitle = "Buildings:"
     }
 }
