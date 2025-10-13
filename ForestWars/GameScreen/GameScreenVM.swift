@@ -224,6 +224,17 @@ class GameScreenVM {
         return gameField[row][column].isSelected
     }
     
+    /// Возвращает общее количество юнитов заданного типа на поле
+    func getTotalUnits(of type: CellType) -> Int {
+        var total = 0
+        for row in gameField {
+            for cell in row where cell.type == type {
+                total += cell.number
+            }
+        }
+        return total
+    }
+    
     // MARK: - Private Methods
     
     /// Проверка возможности перемещения

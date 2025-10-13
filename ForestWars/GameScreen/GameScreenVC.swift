@@ -38,29 +38,6 @@ class GameScreenVC: UIViewController {
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        setupUI()
-        setupViewModel()
-    }
-    
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        leftInfoStack.updateUnits(count: 999)
-        rightInfoStack.updateUnits(count: 999)
-        leftInfoStack.updateBuildings(count: 999)
-        rightInfoStack.updateBuildings(count: 999)
-    }
-    
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        // Инициализируем игровое поле после того, как GameFieldView создаст ячейки
-        if !isGameFieldInitialized && gameFieldView.getCell(at: 0, column: 0) != nil {
-            viewModel.initializeGameField()
-            isGameFieldInitialized = true
-        }
-    }
     
     // MARK: - Setup
     private func setupViewModel() {
@@ -131,6 +108,28 @@ class GameScreenVC: UIViewController {
     }
     
     // MARK: - Lifecycle
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupUI()
+        setupViewModel()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        updateUnitsInfo()
+        leftInfoStack.updateBuildings(count: 999)
+        rightInfoStack.updateBuildings(count: 999)
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        // Инициализируем игровое поле после того, как GameFieldView создаст ячейки
+        if !isGameFieldInitialized && gameFieldView.getCell(at: 0, column: 0) != nil {
+            viewModel.initializeGameField()
+            isGameFieldInitialized = true
+        }
+    }
+    
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         if isBeingDismissed {
@@ -140,6 +139,15 @@ class GameScreenVC: UIViewController {
     
     deinit {
         print("GameScreenVC: Игровой экран деинициализирован")
+    }
+    
+    // MARK: - Private Methods
+    private func updateUnitsInfo() {
+        let allyUnits = viewModel.getTotalUnits(of: .ally)
+        let enemyUnits = viewModel.getTotalUnits(of: .enemy)
+        
+        leftInfoStack.updateUnits(count: allyUnits)
+        rightInfoStack.updateUnits(count: enemyUnits)
     }
 }
 
@@ -174,6 +182,7 @@ extension GameScreenVC: GameScreenVMDelegate {
     func didResetField() {
         // Сбрасываем поле через GameFieldView
         gameFieldView.resetField()
+        updateUnitsInfo()
     }
     
     func didSelectCell(at row: Int, column: Int, cellType: CellType, number: Int, isSelected: Bool) {
@@ -204,6 +213,9 @@ extension GameScreenVC: GameScreenVMDelegate {
                 }
             }
         }
+        
+        // После завершения перемещения обновляем счётчики
+        updateUnitsInfo()
     }
 }
 
