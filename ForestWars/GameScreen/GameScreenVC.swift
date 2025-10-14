@@ -47,19 +47,14 @@ class GameScreenVC: UIViewController {
     private func setupUI() {
         view.backgroundColor = .systemBackground
         
-        // Настройка игрового поля
         gameFieldView.delegate = self
         gameFieldView.translatesAutoresizingMaskIntoConstraints = false
-        gameFieldView.backgroundColor = .clear
         
-        // Настройка кнопок
         resetButton.addTarget(self, action: #selector(resetButtonTapped), for: .touchUpInside)
         closeButton.addTarget(self, action: #selector(closeButtonTapped), for: .touchUpInside)
         
-        // Добавление subviews
         view.addSubview(leftInfoStack)
         view.addSubview(rightInfoStack)
-        
         view.addSubview(gameFieldView)
         view.addSubview(resetButton)
         view.addSubview(closeButton)
@@ -121,14 +116,7 @@ class GameScreenVC: UIViewController {
         rightInfoStack.updateBuildings(count: 999)
     }
     
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        // Инициализируем игровое поле после того, как GameFieldView создаст ячейки
-        if !isGameFieldInitialized && gameFieldView.getCell(at: 0, column: 0) != nil {
-            viewModel.initializeGameField()
-            isGameFieldInitialized = true
-        }
-    }
+    
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
@@ -149,12 +137,31 @@ class GameScreenVC: UIViewController {
         leftInfoStack.updateUnits(count: allyUnits)
         rightInfoStack.updateUnits(count: enemyUnits)
     }
+    
+    private func startGameFieldInitializationIfNeeded() {
+        guard !isGameFieldInitialized else { return }
+        isGameFieldInitialized = true
+        print("[GameScreenVC] Grid is ready — initializing ViewModel")
+        
+        // 1. Инициализируем игровое поле через ViewModel
+        viewModel.initializeGameField()
+
+        // 2. Анимация появления всех ячеек
+        for row in 0..<Constants.GameField.gridHeight {
+            for column in 0..<Constants.GameField.gridWidth {
+                gameFieldView.addCellWithAppearAnimation(row: row, column: column)
+            }
+        }
+    }
 }
 
 // MARK: - GameFieldViewDelegate
 extension GameScreenVC: GameFieldViewDelegate {
+    func gameFieldDidFinishCreatingGrid() {
+        startGameFieldInitializationIfNeeded()
+    }
+    
     func gameFieldCellTapped(at row: Int, column: Int, cell: CustomSquareButton) {
-        // Передаем событие в ViewModel
         viewModel.cellTapped(at: row, column: column)
     }
 }

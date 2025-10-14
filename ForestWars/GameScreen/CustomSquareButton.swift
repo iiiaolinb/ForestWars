@@ -36,7 +36,7 @@ class CustomSquareButton: UIView {
     
     var cellType: CellType = .neutral {
         didSet {
-            updateTextColor()
+            updateTextAndBuildingColor()
         }
     }
     
@@ -64,6 +64,34 @@ class CustomSquareButton: UIView {
         imageView.tintColor = Constants.Image.tintColor
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
+    }()
+    
+    private let buildingImageView1: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
+        imageView.clipsToBounds = true
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.backgroundColor = .brown
+        return imageView
+    }()
+
+    private let buildingImageView2: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
+        imageView.clipsToBounds = true
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.backgroundColor = .blue
+        return imageView
+    }()
+
+    private lazy var buildingStack: UIStackView = {
+        let stack = UIStackView(arrangedSubviews: [buildingImageView1, buildingImageView2])
+        stack.axis = .horizontal
+        stack.spacing = Constants.BuildingStackConstants.spacing
+        stack.alignment = .top // вертикальное выравнивание
+        stack.distribution = .fillProportionally // чтобы иконки не растягивались
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
     }()
     
     private var isPressed: Bool = false {
@@ -96,19 +124,15 @@ class CustomSquareButton: UIView {
         layer.shadowRadius = Constants.Button.shadowRadius
         layer.shadowOpacity = Constants.Button.shadowOpacity
         
-        // Добавление subviews
         addSubview(numberLabel)
         addSubview(centerImageView)
+        addSubview(buildingStack)
         
-        // Настройка constraints
         setupConstraints()
-        
-        // Настройка жестов
         setupGestures()
-        
-        // Инициализация внешнего вида
         updateAppearance()
-        updateTextColor()
+        updateTextAndBuildingColor()
+        setupBuildingImages()
         
         // Устанавливаем начальную прозрачность картинки
         centerImageView.alpha = Constants.Image.normalAlpha
@@ -117,6 +141,7 @@ class CustomSquareButton: UIView {
     override func layoutSubviews() {
         super.layoutSubviews()
         updateFontSize()
+        layoutIfNeeded()
     }
     
     private func setupConstraints() {
@@ -130,8 +155,19 @@ class CustomSquareButton: UIView {
             centerImageView.centerXAnchor.constraint(equalTo: centerXAnchor),
             centerImageView.centerYAnchor.constraint(equalTo: centerYAnchor),
             centerImageView.widthAnchor.constraint(equalTo: widthAnchor, multiplier: Constants.Image.widthMultiplier),
-            centerImageView.heightAnchor.constraint(equalTo: heightAnchor, multiplier: Constants.Image.heightMultiplier)
+            centerImageView.heightAnchor.constraint(equalTo: heightAnchor, multiplier: Constants.Image.heightMultiplier),
+            
+            // buildingStack в правом верхнем углу
+            buildingStack.topAnchor.constraint(equalTo: topAnchor, constant: Constants.BuildingStackConstants.margins),
+            buildingStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -Constants.BuildingStackConstants.margins)
         ])
+        
+        // Адаптивный размер иконок
+        buildingImageView1.widthAnchor.constraint(equalTo: widthAnchor, multiplier: Constants.BuildingStackConstants.iconSizeMultiplier).isActive = true
+        buildingImageView1.heightAnchor.constraint(equalTo: buildingImageView1.widthAnchor).isActive = true
+        
+        buildingImageView2.widthAnchor.constraint(equalTo: widthAnchor, multiplier: Constants.BuildingStackConstants.iconSizeMultiplier).isActive = true
+        buildingImageView2.heightAnchor.constraint(equalTo: buildingImageView2.widthAnchor).isActive = true
     }
     
     private func setupGestures() {
@@ -236,8 +272,10 @@ class CustomSquareButton: UIView {
         }
     }
     
-    private func updateTextColor() {
+    private func updateTextAndBuildingColor() {
         numberLabel.textColor = cellType.textColor
+        buildingImageView1.tintColor = cellType.textColor
+        buildingImageView2.tintColor = cellType.textColor
         
         // Обновляем цвет обводки и свечения, если кнопка выбрана
         if isSelected {
@@ -283,5 +321,11 @@ class CustomSquareButton: UIView {
         let clampedFontSize = max(Constants.Label.minFontSize, min(calculatedFontSize, Constants.Label.maxFontSize))
         
         numberLabel.font = UIFont.boldSystemFont(ofSize: clampedFontSize)
+    }
+    
+    private func setupBuildingImages() {
+        let buildingImage = UIImage(systemName: Constants.BuildingStackConstants.iconName)?.withRenderingMode(.alwaysTemplate)
+        buildingImageView1.image = buildingImage
+        buildingImageView2.image = buildingImage
     }
 }

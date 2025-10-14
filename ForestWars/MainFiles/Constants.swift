@@ -48,6 +48,14 @@ struct Constants {
         static let maxWidthMultiplier: CGFloat = 0.35
     }
     
+    // MARK: - Buildings Properties
+    enum BuildingStackConstants {
+        static let margins: CGFloat = 6
+        static let iconSizeMultiplier: CGFloat = 0.18 // Размер относительно ширины кнопки
+        static let spacing: CGFloat = 2
+        static let iconName: String = "building.2" // стандартная системная иконка SF Symbols
+    }
+    
     struct InfoLabel {
         static let titleFontSize: CGFloat = 14
         static let countFontSize: CGFloat = 16

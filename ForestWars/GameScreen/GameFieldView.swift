@@ -9,15 +9,20 @@ import UIKit
 
 protocol GameFieldViewDelegate: AnyObject {
     func gameFieldCellTapped(at row: Int, column: Int, cell: CustomSquareButton)
+    func gameFieldDidFinishCreatingGrid()
 }
 
-class GameFieldView: UIView {
+final class GameFieldView: UIView {
     
-    // MARK: - Properties
+    // MARK: - Public
     weak var delegate: GameFieldViewDelegate?
     
+    private(set) var isGridCreated = false
+    
+    // MARK: - Private
     private var cells: [[CustomSquareButton]] = []
     private var buttonSize: CGFloat = 0
+    
     private let stackView: UIStackView = {
         let stack = UIStackView()
         stack.axis = .vertical
@@ -28,37 +33,19 @@ class GameFieldView: UIView {
         return stack
     }()
     
-    // MARK: - Initialization
+    // MARK: - Init
     override init(frame: CGRect) {
         super.init(frame: frame)
-        initializeCellsArray()
         setupView()
     }
-    
     required init?(coder: NSCoder) {
         super.init(coder: coder)
-        initializeCellsArray()
         setupView()
-    }
-    
-    // MARK: - Setup
-    private func initializeCellsArray() {
-        // Инициализируем пустой массив ячеек
-        cells = []
     }
     
     private func setupView() {
         backgroundColor = .clear
         addSubview(stackView)
-        setupConstraints()
-    }
-    
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        updateButtonSizes()
-    }
-    
-    private func setupConstraints() {
         NSLayoutConstraint.activate([
             stackView.topAnchor.constraint(equalTo: topAnchor),
             stackView.leadingAnchor.constraint(equalTo: leadingAnchor),
@@ -67,87 +54,60 @@ class GameFieldView: UIView {
         ])
     }
     
+    // MARK: - Layout
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        
+        guard !isGridCreated, bounds.width > 0, bounds.height > 0 else { return }
+        createGrid()
+        isGridCreated = true
+        
+        print("[GameFieldView] Grid created with buttonSize = \(buttonSize), размеры поля = \(bounds.size)")
+        delegate?.gameFieldDidFinishCreatingGrid()
+    }
+    
+    // MARK: - Grid creation
     private func createGrid() {
-        // Очищаем существующие subviews
-        stackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        let gridWidth = Constants.GameField.gridWidth
+        let gridHeight = Constants.GameField.gridHeight
+        buttonSize = Constants.GameField.calculateButtonSize(for: bounds.size)
+        cells = []
         
-        // Создаем массив для хранения кнопок
-        cells = Array(repeating: Array(repeating: CustomSquareButton(), count: Constants.GameField.gridWidth), count: Constants.GameField.gridHeight)
-        
-        // Создаем строки
-        for row in 0..<Constants.GameField.gridHeight {
-            let rowStackView = UIStackView()
-            rowStackView.axis = .horizontal
-            rowStackView.distribution = .fillEqually
-            rowStackView.alignment = .fill
-            rowStackView.spacing = Constants.GameField.cellSpacing
+        for row in 0..<gridHeight {
+            var rowCells: [CustomSquareButton] = []
+            let rowStack = UIStackView()
+            rowStack.axis = .horizontal
+            rowStack.distribution = .fillEqually
+            rowStack.alignment = .fill
+            rowStack.spacing = Constants.GameField.cellSpacing
             
-            // Создаем кнопки для каждой строки
-            for column in 0..<Constants.GameField.gridWidth {
+            for column in 0..<gridWidth {
                 let cell = CustomSquareButton()
                 cell.delegate = self
-                cell.translatesAutoresizingMaskIntoConstraints = false
-                
-                // Инициализируем ячейку с дефолтными значениями
-                // Данные будут установлены через GameScreenVM
                 cell.cellType = .neutral
                 cell.setNumber(Constants.CellType.neutralNumber)
                 cell.setImage(named: Constants.SystemImages.neutral)
+                cell.tag = row * gridWidth + column
                 
-                // Сохраняем позицию в теге (row * width + column)
-                cell.tag = row * Constants.GameField.gridWidth + column
-                
-                cells[row][column] = cell
-                rowStackView.addArrangedSubview(cell)
-            }
-            
-            stackView.addArrangedSubview(rowStackView)
-        }
-    }
-    
-    private func updateButtonSizes() {
-        guard bounds.width > 0 && bounds.height > 0 else { return }
-        
-        let newButtonSize = Constants.GameField.calculateButtonSize(for: bounds.size)
-        
-        // Создаем сетку только если размер изменился или сетка еще не создана
-        if newButtonSize != buttonSize || cells.isEmpty {
-            buttonSize = newButtonSize
-            createGrid()
-            updateAllButtonConstraints()
-        }
-    }
-    
-    private func updateAllButtonConstraints() {
-        for row in 0..<Constants.GameField.gridHeight {
-            for column in 0..<Constants.GameField.gridWidth {
-                let cell = cells[row][column]
-                
-                // Удаляем старые constraints
-                cell.removeFromSuperview()
                 cell.translatesAutoresizingMaskIntoConstraints = false
-                
-                // Находим соответствующий rowStackView и добавляем кнопку обратно
-                if let rowStackView = stackView.arrangedSubviews[row] as? UIStackView {
-                    rowStackView.addArrangedSubview(cell)
-                }
-                
-                // Устанавливаем новые constraints
                 NSLayoutConstraint.activate([
                     cell.widthAnchor.constraint(equalToConstant: buttonSize),
                     cell.heightAnchor.constraint(equalToConstant: buttonSize)
                 ])
+                
+                rowStack.addArrangedSubview(cell)
+                rowCells.append(cell)
             }
+            
+            cells.append(rowCells)
+            stackView.addArrangedSubview(rowStack)
         }
     }
     
-    // MARK: - Public Methods
+    // MARK: - Public
     func getCell(at row: Int, column: Int) -> CustomSquareButton? {
-        guard row >= 0 && row < Constants.GameField.gridHeight &&
-              column >= 0 && column < Constants.GameField.gridWidth &&
-              !cells.isEmpty && row < cells.count && column < cells[row].count else {
-            return nil
-        }
+        guard row >= 0, row < cells.count,
+              column >= 0, column < cells[row].count else { return nil }
         return cells[row][column]
     }
     
@@ -195,17 +155,31 @@ class GameFieldView: UIView {
         }
     }
     
-    private func getPositionFromTag(_ tag: Int) -> (row: Int, column: Int) {
-        let row = tag / Constants.GameField.gridWidth
-        let column = tag % Constants.GameField.gridWidth
-        return (row: row, column: column)
+    func addCellWithAppearAnimation(row: Int, column: Int) {
+        guard let cell = getCell(at: row, column: column) else { return }
+        cell.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)
+        cell.alpha = 0.0
+        let delay = 0.015 * Double(row * Constants.GameField.gridWidth + column)
+        UIView.animate(
+            withDuration: 0.36,
+            delay: delay,
+            usingSpringWithDamping: 0.66,
+            initialSpringVelocity: 0.6,
+            options: [.curveEaseOut],
+            animations: {
+                cell.transform = .identity
+                cell.alpha = 1.0
+            },
+            completion: nil
+        )
     }
 }
 
 // MARK: - CustomSquareButtonDelegate
 extension GameFieldView: CustomSquareButtonDelegate {
     func customSquareButtonTapped(_ button: CustomSquareButton) {
-        let position = getPositionFromTag(button.tag)
-        delegate?.gameFieldCellTapped(at: position.row, column: position.column, cell: button)
+        let row = button.tag / Constants.GameField.gridWidth
+        let column = button.tag % Constants.GameField.gridWidth
+        delegate?.gameFieldCellTapped(at: row, column: column, cell: button)
     }
 }
