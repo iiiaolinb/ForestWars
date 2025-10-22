@@ -8,12 +8,14 @@
 struct GameCell {
     let type: CellType
     let number: Int
+    let buildings: Int
     let imageName: String
     var isSelected: Bool
     
-    init(type: CellType, number: Int, imageName: String, isSelected: Bool = false) {
+    init(type: CellType, number: Int, buildings: Int = 0, imageName: String, isSelected: Bool = false) {
         self.type = type
         self.number = number
+        self.buildings = buildings
         self.imageName = imageName
         self.isSelected = isSelected
     }

@@ -117,6 +117,7 @@ struct Constants {
     // MARK: - Gesture Properties
     struct Gesture {
         static let longPressDuration: TimeInterval = 1.0
+        static let secondTapWaitingDuration: TimeInterval = 0.2
     }
     
     // MARK: - System Images

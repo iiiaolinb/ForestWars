@@ -9,6 +9,7 @@ import UIKit
 
 protocol GameFieldViewDelegate: AnyObject {
     func gameFieldCellTapped(at row: Int, column: Int, cell: CustomSquareButton)
+    func gameFieldCellDoubleTapped(at row: Int, column: Int, cell: CustomSquareButton)
     func gameFieldDidFinishCreatingGrid()
 }
 
@@ -181,5 +182,15 @@ extension GameFieldView: CustomSquareButtonDelegate {
         let row = button.tag / Constants.GameField.gridWidth
         let column = button.tag % Constants.GameField.gridWidth
         delegate?.gameFieldCellTapped(at: row, column: column, cell: button)
+    }
+    
+    func customSquareButtonDoubleTapped(_ button: CustomSquareButton) {
+        let row = button.tag / Constants.GameField.gridWidth
+        let column = button.tag % Constants.GameField.gridWidth
+        delegate?.gameFieldCellDoubleTapped(at: row, column: column, cell: button)
+    }
+    
+    func hasSelectedCells() -> Bool {
+        return !getSelectedCells().isEmpty
     }
 }

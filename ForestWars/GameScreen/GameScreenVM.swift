@@ -15,13 +15,14 @@ enum MoveResult {
 
 // MARK: - GameScreenVMDelegate
 protocol GameScreenVMDelegate: AnyObject {
-    func didUpdateCell(at row: Int, column: Int, cellType: CellType, number: Int, imageName: String)
+    func didUpdateCell(at row: Int, column: Int, cellType: CellType, number: Int, buiding: Int, imageName: String)
     func didUpdateCellSelection(at row: Int, column: Int, isSelected: Bool)
     func didResetField()
     func didSelectCell(at row: Int, column: Int, cellType: CellType, number: Int, isSelected: Bool)
     func didUpdateSelectedCellsCount(_ count: Int)
     func didStartUnitMovementAnimation(at row: Int, column: Int)
     func didCompleteUnitMovement()
+    
 }
 
 // MARK: - GameScreenVM
@@ -54,17 +55,19 @@ class GameScreenVM {
             for column in 0..<gridWidth {
                 let cellType = getRandomCellType()
                 let number = getNumberForCellType(cellType)
+                let buildings = Int.random(in: 0...2)
                 let imageName = getImageNameForCellType(cellType)
                 
                 let cell = GameCell(
                     type: cellType,
                     number: number,
+                    buildings: buildings,
                     imageName: imageName,
                     isSelected: false
                 )
                 
                 rowCells.append(cell)
-                delegate?.didUpdateCell(at: row, column: column, cellType: cellType, number: number, imageName: imageName)
+                delegate?.didUpdateCell(at: row, column: column, cellType: cellType, number: number, buiding: buildings, imageName: imageName)
             }
             gameField.append(rowCells)
         }
@@ -80,16 +83,18 @@ class GameScreenVM {
             for column in 0..<gridWidth {
                 let cellType = getRandomCellType()
                 let number = getNumberForCellType(cellType)
+                let buildings = Int.random(in: 0...2)
                 let imageName = getImageNameForCellType(cellType)
                 
                 gameField[row][column] = GameCell(
                     type: cellType,
                     number: number,
+                    buildings: buildings,
                     imageName: imageName,
                     isSelected: false
                 )
                 
-                delegate?.didUpdateCell(at: row, column: column, cellType: cellType, number: number, imageName: imageName)
+                delegate?.didUpdateCell(at: row, column: column, cellType: cellType, number: number, buiding: buildings, imageName: imageName)
             }
         }
         
@@ -134,6 +139,11 @@ class GameScreenVM {
             selectCellAndNeighbors(at: row, column: column)
             updateSelectedCellsCount()
         }
+    }
+    
+    func cellDoubleTapped(at row: Int, column: Int) {
+        
+        print("Двойной тап")
     }
     
     /// Получение информации о ячейке
@@ -455,6 +465,7 @@ class GameScreenVM {
         let newTargetCell = GameCell(
             type: sourceCell.type, // Целевая ячейка принимает тип источника
             number: finalUnits,
+            buildings: targetCell.buildings,
             imageName: getImageNameForCellType(sourceCell.type),
             isSelected: false
         )
@@ -467,6 +478,7 @@ class GameScreenVM {
             column: targetColumn,
             cellType: newTargetCell.type,
             number: newTargetCell.number,
+            buiding: newTargetCell.buildings,
             imageName: newTargetCell.imageName
         )
         
@@ -474,6 +486,7 @@ class GameScreenVM {
         let updatedSourceCell = GameCell(
             type: sourceCell.type, // Сохраняем тип ячейки
             number: 0, // Устанавливаем 0 юнитов
+            buildings: sourceCell.buildings,
             imageName: getImageNameForCellType(sourceCell.type),
             isSelected: false
         )
@@ -486,6 +499,7 @@ class GameScreenVM {
             column: sourceColumn,
             cellType: updatedSourceCell.type,
             number: updatedSourceCell.number,
+            buiding: updatedSourceCell.buildings,
             imageName: updatedSourceCell.imageName
         )
         

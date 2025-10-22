@@ -164,15 +164,20 @@ extension GameScreenVC: GameFieldViewDelegate {
     func gameFieldCellTapped(at row: Int, column: Int, cell: CustomSquareButton) {
         viewModel.cellTapped(at: row, column: column)
     }
+    
+    func gameFieldCellDoubleTapped(at row: Int, column: Int, cell: CustomSquareButton) {
+        viewModel.cellDoubleTapped(at: row, column: column)
+    }
 }
 
 // MARK: - GameScreenVMDelegate
 extension GameScreenVC: GameScreenVMDelegate {
-    func didUpdateCell(at row: Int, column: Int, cellType: CellType, number: Int, imageName: String) {
+    func didUpdateCell(at row: Int, column: Int, cellType: CellType, number: Int, buiding: Int, imageName: String) {
         // Обновляем UI ячейки через GameFieldView
         if let cell = gameFieldView.getCell(at: row, column: column) {
             cell.cellType = cellType
             cell.setNumber(number)
+            cell.setBuidings(buiding)
             cell.setImage(named: imageName)
         } else {
             print("GameScreenVC: Ячейка [\(row), \(column)] еще не создана, пропускаем обновление")
@@ -225,4 +230,3 @@ extension GameScreenVC: GameScreenVMDelegate {
         updateUnitsInfo()
     }
 }
-
