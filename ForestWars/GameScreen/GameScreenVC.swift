@@ -14,6 +14,11 @@ class GameScreenVC: UIViewController {
     private let gameFieldView = GameFieldView()
     private var isGameFieldInitialized = false
     
+    //MARK: - UI elements
+    
+    private let leftInfoStack = TopInfoLabelAssistent(infoLabelType: .ally)
+    private let rightInfoStack = TopInfoLabelAssistent(infoLabelType: .enemy)
+    
     private let resetButton: ButtonAssistent = {
         let button = ButtonAssistent(
             title: Constants.Text.resetButtonTitle,
@@ -33,21 +38,6 @@ class GameScreenVC: UIViewController {
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        setupUI()
-        setupViewModel()
-    }
-    
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        // Инициализируем игровое поле после того, как GameFieldView создаст ячейки
-        if !isGameFieldInitialized && gameFieldView.getCell(at: 0, column: 0) != nil {
-            viewModel.initializeGameField()
-            isGameFieldInitialized = true
-        }
-    }
     
     // MARK: - Setup
     private func setupViewModel() {
@@ -57,24 +47,35 @@ class GameScreenVC: UIViewController {
     private func setupUI() {
         view.backgroundColor = .systemBackground
         
-        // Настройка игрового поля
         gameFieldView.delegate = self
         gameFieldView.translatesAutoresizingMaskIntoConstraints = false
-        gameFieldView.backgroundColor = .clear
         
-        // Настройка кнопок
         resetButton.addTarget(self, action: #selector(resetButtonTapped), for: .touchUpInside)
         closeButton.addTarget(self, action: #selector(closeButtonTapped), for: .touchUpInside)
         
-        // Добавление subviews
+        view.addSubview(leftInfoStack)
+        view.addSubview(rightInfoStack)
         view.addSubview(gameFieldView)
         view.addSubview(resetButton)
         view.addSubview(closeButton)
         
+        leftInfoStack.translatesAutoresizingMaskIntoConstraints = false
+        rightInfoStack.translatesAutoresizingMaskIntoConstraints = false
+        
         // Constraints
         NSLayoutConstraint.activate([
+            leftInfoStack.topAnchor.constraint(equalTo: view.topAnchor, constant: Constants.InfoLabel.topMargin),
+            leftInfoStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: Constants.InfoLabel.horizontalMargin),
+            leftInfoStack.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 1/3),
+            leftInfoStack.heightAnchor.constraint(equalToConstant: Constants.InfoLabel.height),
+            
+            rightInfoStack.topAnchor.constraint(equalTo: view.topAnchor, constant: Constants.InfoLabel.topMargin),
+            rightInfoStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -Constants.InfoLabel.horizontalMargin),
+            rightInfoStack.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 1/3),
+            rightInfoStack.heightAnchor.constraint(equalToConstant: Constants.InfoLabel.height),
+            
             // Игровое поле с фиксированными отступами
-            gameFieldView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: Constants.GameField.topMargin),
+            gameFieldView.topAnchor.constraint(equalTo: leftInfoStack.bottomAnchor, constant: Constants.GameField.topMargin),
             gameFieldView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: Constants.GameField.horizontalMargin),
             gameFieldView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -Constants.GameField.horizontalMargin),
             gameFieldView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -Constants.GameField.bottomMargin),
@@ -102,6 +103,21 @@ class GameScreenVC: UIViewController {
     }
     
     // MARK: - Lifecycle
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupUI()
+        setupViewModel()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        updateUnitsInfo()
+        leftInfoStack.updateBuildings(count: 999)
+        rightInfoStack.updateBuildings(count: 999)
+    }
+    
+    
+    
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         if isBeingDismissed {
@@ -112,23 +128,56 @@ class GameScreenVC: UIViewController {
     deinit {
         print("GameScreenVC: Игровой экран деинициализирован")
     }
+    
+    // MARK: - Private Methods
+    private func updateUnitsInfo() {
+        let allyUnits = viewModel.getTotalUnits(of: .ally)
+        let enemyUnits = viewModel.getTotalUnits(of: .enemy)
+        
+        leftInfoStack.updateUnits(count: allyUnits)
+        rightInfoStack.updateUnits(count: enemyUnits)
+    }
+    
+    private func startGameFieldInitializationIfNeeded() {
+        guard !isGameFieldInitialized else { return }
+        isGameFieldInitialized = true
+        print("[GameScreenVC] Grid is ready — initializing ViewModel")
+        
+        // 1. Инициализируем игровое поле через ViewModel
+        viewModel.initializeGameField()
+
+        // 2. Анимация появления всех ячеек
+        for row in 0..<Constants.GameField.gridHeight {
+            for column in 0..<Constants.GameField.gridWidth {
+                gameFieldView.addCellWithAppearAnimation(row: row, column: column)
+            }
+        }
+    }
 }
 
 // MARK: - GameFieldViewDelegate
 extension GameScreenVC: GameFieldViewDelegate {
+    func gameFieldDidFinishCreatingGrid() {
+        startGameFieldInitializationIfNeeded()
+    }
+    
     func gameFieldCellTapped(at row: Int, column: Int, cell: CustomSquareButton) {
-        // Передаем событие в ViewModel
         viewModel.cellTapped(at: row, column: column)
+    }
+    
+    func gameFieldCellDoubleTapped(at row: Int, column: Int, cell: CustomSquareButton) {
+        viewModel.cellDoubleTapped(at: row, column: column)
     }
 }
 
 // MARK: - GameScreenVMDelegate
 extension GameScreenVC: GameScreenVMDelegate {
-    func didUpdateCell(at row: Int, column: Int, cellType: CellType, number: String, imageName: String) {
+    func didUpdateCell(at row: Int, column: Int, cellType: CellType, number: Int, buiding: Int, imageName: String) {
         // Обновляем UI ячейки через GameFieldView
         if let cell = gameFieldView.getCell(at: row, column: column) {
             cell.cellType = cellType
             cell.setNumber(number)
+            cell.setBuidings(buiding)
             cell.setImage(named: imageName)
         } else {
             print("GameScreenVC: Ячейка [\(row), \(column)] еще не создана, пропускаем обновление")
@@ -138,16 +187,17 @@ extension GameScreenVC: GameScreenVMDelegate {
     func didUpdateCellSelection(at row: Int, column: Int, isSelected: Bool) {
         // Обновляем состояние выбора ячейки
         if let cell = gameFieldView.getCell(at: row, column: column) {
-            cell.isSelected = isSelected
+            cell.setSelected(isSelected)
         }
     }
     
     func didResetField() {
         // Сбрасываем поле через GameFieldView
         gameFieldView.resetField()
+        updateUnitsInfo()
     }
     
-    func didSelectCell(at row: Int, column: Int, cellType: CellType, number: String, isSelected: Bool) {
+    func didSelectCell(at row: Int, column: Int, cellType: CellType, number: Int, isSelected: Bool) {
         // Убрали индивидуальные логи - теперь используется только общий вывод в didUpdateSelectedCellsCount
     }
     
@@ -159,5 +209,24 @@ extension GameScreenVC: GameScreenVMDelegate {
             print(viewModel.getSelectedCellsInfo())
         }
     }
+    
+    func didStartUnitMovementAnimation(at row: Int, column: Int) {
+        if let cell = gameFieldView.getCell(at: row, column: column) {
+            cell.startUnitMovementAnimation()
+        }
+    }
+    
+    func didCompleteUnitMovement() {
+        // Останавливаем анимацию на всех ячейках
+        for row in 0..<Constants.GameField.gridHeight {
+            for column in 0..<Constants.GameField.gridWidth {
+                if let cell = gameFieldView.getCell(at: row, column: column) {
+                    cell.stopUnitMovementAnimation()
+                }
+            }
+        }
+        
+        // После завершения перемещения обновляем счётчики
+        updateUnitsInfo()
+    }
 }
-

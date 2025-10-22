@@ -16,17 +16,19 @@ enum CellType {
     var textColor: UIColor {
         switch self {
         case .enemy:
-            return .systemRed
+            return Constants.Colors.mainEnemy
         case .ally:
-            return .systemGreen
+            return Constants.Colors.mainAlly
         case .neutral:
-            return .darkGray
+            return Constants.Colors.mainNeutrlal
         }
     }
 }
 
 protocol CustomSquareButtonDelegate: AnyObject {
     func customSquareButtonTapped(_ button: CustomSquareButton)
+    func customSquareButtonDoubleTapped(_ button: CustomSquareButton)
+    func hasSelectedCells() -> Bool
 }
 
 class CustomSquareButton: UIView {
@@ -36,7 +38,7 @@ class CustomSquareButton: UIView {
     
     var cellType: CellType = .neutral {
         didSet {
-            updateTextColor()
+            updateTextAndBuildingColor()
         }
     }
     
@@ -66,13 +68,44 @@ class CustomSquareButton: UIView {
         return imageView
     }()
     
+    private let buildingImageView1: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
+        imageView.clipsToBounds = true
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.backgroundColor = .clear
+        imageView.tintColor = .clear
+        return imageView
+    }()
+
+    private let buildingImageView2: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
+        imageView.clipsToBounds = true
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.backgroundColor = .clear
+        imageView.tintColor = .clear
+        return imageView
+    }()
+
+    private lazy var buildingStack: UIStackView = {
+        let stack = UIStackView(arrangedSubviews: [buildingImageView1, buildingImageView2])
+        stack.axis = .horizontal
+        stack.spacing = Constants.BuildingStackConstants.spacing
+        stack.alignment = .top
+        stack.distribution = .fillProportionally
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
+    
     private var isPressed: Bool = false {
         didSet {
             updateAppearance()
         }
     }
     
-    private var longPressTimer: Timer?
+    private weak var longPressTimer: Timer?
+    private weak var singleTapTimer: Timer?
     private var isShaking: Bool = false
     
     // MARK: - Initialization
@@ -96,19 +129,15 @@ class CustomSquareButton: UIView {
         layer.shadowRadius = Constants.Button.shadowRadius
         layer.shadowOpacity = Constants.Button.shadowOpacity
         
-        // Добавление subviews
         addSubview(numberLabel)
         addSubview(centerImageView)
+        addSubview(buildingStack)
         
-        // Настройка constraints
         setupConstraints()
-        
-        // Настройка жестов
         setupGestures()
-        
-        // Инициализация внешнего вида
         updateAppearance()
-        updateTextColor()
+        updateTextAndBuildingColor()
+        setupBuildingImages()
         
         // Устанавливаем начальную прозрачность картинки
         centerImageView.alpha = Constants.Image.normalAlpha
@@ -117,6 +146,7 @@ class CustomSquareButton: UIView {
     override func layoutSubviews() {
         super.layoutSubviews()
         updateFontSize()
+        layoutIfNeeded()
     }
     
     private func setupConstraints() {
@@ -130,36 +160,57 @@ class CustomSquareButton: UIView {
             centerImageView.centerXAnchor.constraint(equalTo: centerXAnchor),
             centerImageView.centerYAnchor.constraint(equalTo: centerYAnchor),
             centerImageView.widthAnchor.constraint(equalTo: widthAnchor, multiplier: Constants.Image.widthMultiplier),
-            centerImageView.heightAnchor.constraint(equalTo: heightAnchor, multiplier: Constants.Image.heightMultiplier)
+            centerImageView.heightAnchor.constraint(equalTo: heightAnchor, multiplier: Constants.Image.heightMultiplier),
+            
+            // buildingStack в правом верхнем углу
+            buildingStack.topAnchor.constraint(equalTo: topAnchor, constant: Constants.BuildingStackConstants.margins),
+            buildingStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -Constants.BuildingStackConstants.margins)
         ])
+        
+        // Адаптивный размер иконок
+        buildingImageView1.widthAnchor.constraint(equalTo: widthAnchor, multiplier: Constants.BuildingStackConstants.iconSizeMultiplier).isActive = true
+        buildingImageView1.heightAnchor.constraint(equalTo: buildingImageView1.widthAnchor).isActive = true
+        
+        buildingImageView2.widthAnchor.constraint(equalTo: widthAnchor, multiplier: Constants.BuildingStackConstants.iconSizeMultiplier).isActive = true
+        buildingImageView2.heightAnchor.constraint(equalTo: buildingImageView2.widthAnchor).isActive = true
     }
-    
+
     private func setupGestures() {
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(buttonTapped))
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
         addGestureRecognizer(tapGesture)
         
         let longPressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
         longPressGesture.minimumPressDuration = Constants.Gesture.longPressDuration
         addGestureRecognizer(longPressGesture)
-        
-        // Разрешаем одновременное выполнение жестов
-        tapGesture.require(toFail: longPressGesture)
+    }
+
+    @objc private func handleTap(_ gesture: UITapGestureRecognizer) {
+        if gesture.state == .ended {
+            if let timer = singleTapTimer {
+                // Второй тап произошёл до таймера → двойное нажатие
+                timer.invalidate()
+                singleTapTimer = nil
+                if let delegate, !delegate.hasSelectedCells() {
+                    buttonDoubleTapped()
+                }
+            } else {
+                // Первый тап → ставим короткий таймер
+                singleTapTimer = Timer.scheduledTimer(withTimeInterval: Constants.Gesture.secondTapWaitingDuration, repeats: false) { [weak self] _ in
+                    guard let self = self else { return }
+                    self.buttonTapped()
+                    self.singleTapTimer = nil
+                }
+            }
+        }
     }
     
     // MARK: - Actions
-    @objc private func buttonTapped() {
-        // Переключаем состояние при нажатии
-        isSelected.toggle()
-        delegate?.customSquareButtonTapped(self)
-    }
-    
     @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
         switch gesture.state {
         case .began:
             startShakingAnimation()
-            // Длительное нажатие переводит только из обычного состояния в нажатое
+            // Длительное нажатие - уведомляем делегата, состояние изменится через ViewModel
             if !isSelected {
-                isSelected = true
                 delegate?.customSquareButtonTapped(self)
             }
         case .ended:
@@ -172,8 +223,23 @@ class CustomSquareButton: UIView {
     }
     
     // MARK: - Public Methods
-    func setNumber(_ number: String) {
-        numberLabel.text = number
+    func setNumber(_ number: Int) {
+        numberLabel.text = String(number)
+    }
+    
+    func setBuidings(_ number: Int) {
+        switch number {
+        case 0:
+            buildingImageView1.isHidden = true
+            buildingImageView2.isHidden = true
+        case 1:
+            buildingImageView1.isHidden = false
+            buildingImageView2.isHidden = true
+        case 2:
+            buildingImageView1.isHidden = false
+            buildingImageView2.isHidden = false
+        default: break
+        }
     }
     
     func setImage(_ image: UIImage?) {
@@ -184,11 +250,32 @@ class CustomSquareButton: UIView {
         centerImageView.image = UIImage(systemName: imageName)?.withRenderingMode(.alwaysTemplate)
     }
     
-    func getNumber() -> String {
-        return numberLabel.text ?? ""
+    func getNumber() -> Int {
+        return Int(numberLabel.text ?? "0") ?? 0
+    }
+    
+    func setSelected(_ selected: Bool) {
+        isSelected = selected
+    }
+    
+    func startUnitMovementAnimation() {
+        startUnitMovementShakingAnimation()
+    }
+    
+    func stopUnitMovementAnimation() {
+        stopShakingAnimation()
     }
     
     // MARK: - Private Methods
+    private func buttonTapped() {
+        delegate?.customSquareButtonTapped(self)
+    }
+    
+    private func buttonDoubleTapped() {
+        delegate?.customSquareButtonDoubleTapped(self)
+        playDoubleTapExplosionAnimation()
+    }
+    
     private func updateAppearance() {
         UIView.animate(withDuration: Constants.Animation.duration) {
             if self.isSelected {
@@ -226,8 +313,10 @@ class CustomSquareButton: UIView {
         }
     }
     
-    private func updateTextColor() {
+    private func updateTextAndBuildingColor() {
         numberLabel.textColor = cellType.textColor
+        buildingImageView1.tintColor = cellType.textColor
+        buildingImageView2.tintColor = cellType.textColor
         
         // Обновляем цвет обводки и свечения, если кнопка выбрана
         if isSelected {
@@ -248,10 +337,64 @@ class CustomSquareButton: UIView {
         layer.add(animation, forKey: "shaking")
     }
     
+    private func startUnitMovementShakingAnimation() {
+        guard !isShaking else { return }
+        isShaking = true
+        
+        let animation = CAKeyframeAnimation(keyPath: "transform.translation.x")
+        animation.timingFunction = CAMediaTimingFunction(name: .linear)
+        animation.duration = Constants.Animation.unitMovementShakeDuration
+        animation.values = Constants.Animation.shakeValues
+        animation.repeatCount = 1 // Один раз для перемещения
+        layer.add(animation, forKey: "unitMovementShaking")
+    }
+    
     private func stopShakingAnimation() {
         guard isShaking else { return }
         isShaking = false
         layer.removeAnimation(forKey: "shaking")
+        layer.removeAnimation(forKey: "unitMovementShaking")
+    }
+    
+    private func playDoubleTapExplosionAnimation() {
+        // 🔸 Эмиттер частиц
+        let emitter = CAEmitterLayer()
+        emitter.emitterPosition = CGPoint(x: bounds.midX, y: bounds.midY)
+        emitter.emitterShape = .circle
+        emitter.emitterSize = CGSize(width: bounds.width * 0.1, height: bounds.height * 0.1)
+        
+        // 🔸 Конфигурация частиц
+        let cell = CAEmitterCell()
+        cell.contents = UIImage(systemName: "circle.fill")?.withRenderingMode(.alwaysTemplate).cgImage
+        cell.birthRate = 80
+        cell.lifetime = 0.4
+        cell.velocity = 150
+        cell.velocityRange = 50
+        cell.scale = 0.05
+        cell.scaleRange = 0.02
+        cell.alphaSpeed = -2.0
+        cell.emissionRange = .pi * 2
+        cell.color = cellType.textColor.cgColor
+
+        emitter.emitterCells = [cell]
+        layer.addSublayer(emitter)
+
+        // 🔸 Убираем слой через 0.4 сек
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            emitter.birthRate = 0
+            emitter.removeFromSuperlayer()
+        }
+
+        // 🔸 Дополнительная короткая "вспышка" ячейки
+        UIView.animate(withDuration: 0.1, animations: {
+            self.transform = CGAffineTransform(scaleX: 1.2, y: 1.2)
+            self.backgroundColor = self.cellType.textColor.withAlphaComponent(0.3)
+        }) { _ in
+            UIView.animate(withDuration: 0.2) {
+                self.transform = .identity
+                self.backgroundColor = Constants.Colors.buttonBackground
+            }
+        }
     }
     
     private func updateFontSize() {
@@ -260,5 +403,11 @@ class CustomSquareButton: UIView {
         let clampedFontSize = max(Constants.Label.minFontSize, min(calculatedFontSize, Constants.Label.maxFontSize))
         
         numberLabel.font = UIFont.boldSystemFont(ofSize: clampedFontSize)
+    }
+    
+    private func setupBuildingImages() {
+        let buildingImage = UIImage(systemName: Constants.BuildingStackConstants.iconName)?.withRenderingMode(.alwaysTemplate)
+        buildingImageView1.image = buildingImage
+        buildingImageView2.image = buildingImage
     }
 }

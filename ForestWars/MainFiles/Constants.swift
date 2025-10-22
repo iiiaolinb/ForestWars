@@ -48,6 +48,24 @@ struct Constants {
         static let maxWidthMultiplier: CGFloat = 0.35
     }
     
+    // MARK: - Buildings Properties
+    enum BuildingStackConstants {
+        static let margins: CGFloat = 6
+        static let iconSizeMultiplier: CGFloat = 0.18 // Размер относительно ширины кнопки
+        static let spacing: CGFloat = 2
+        static let iconName: String = "building.2" // стандартная системная иконка SF Symbols
+    }
+    
+    struct InfoLabel {
+        static let titleFontSize: CGFloat = 14
+        static let countFontSize: CGFloat = 16
+        
+        static let topMargin: CGFloat = 20
+        static let horizontalMargin: CGFloat = 20
+        static let height: CGFloat = 40
+        static let spacing: CGFloat = 4
+    }
+    
     // MARK: - Image Properties
     struct Image {
         static let widthMultiplier: CGFloat = 0.4
@@ -59,6 +77,10 @@ struct Constants {
     
     // MARK: - Colors
     struct Colors {
+        static let mainAlly = UIColor.systemGreen
+        static let mainNeutrlal = UIColor.darkGray
+        static let mainEnemy = UIColor.systemRed
+        
         static let buttonBackground = UIColor.systemBlue
         static let buttonBackgroundPressed = UIColor.systemBlue.withAlphaComponent(0.7)
         static let borderNormal = UIColor.clear
@@ -87,11 +109,15 @@ struct Constants {
         static let shakeDuration: TimeInterval = 0.5
         static let shakeAmplitude: CGFloat = 5.0
         static let shakeValues: [CGFloat] = [-5.0, 5.0, -5.0, 5.0, -3.0, 3.0, -2.0, 2.0, 0.0]
+        
+        // Unit movement animation
+        static let unitMovementShakeDuration: TimeInterval = 0.5
     }
     
     // MARK: - Gesture Properties
     struct Gesture {
         static let longPressDuration: TimeInterval = 1.0
+        static let secondTapWaitingDuration: TimeInterval = 0.2
     }
     
     // MARK: - System Images
@@ -103,13 +129,17 @@ struct Constants {
         // Game buttons icons
         static let resetIcon = "arrow.clockwise"
         static let closeIcon = "xmark.circle.fill"
+        
+        // Top info label icons
+        static let infoLabelIconLeft = "square.grid.3x3.fill"
+        static let infoLabelIconRight = "square.grid.3x3.fill"
     }
     
     // MARK: - Cell Type Properties
     struct CellType {
-        static let enemyNumber = "99"
-        static let allyNumber = "42"
-        static let neutralNumber = "15"
+        static let enemyNumber = 99
+        static let allyNumber = 42
+        static let neutralNumber = 15
     }
     
     // MARK: - Layout Properties
@@ -167,8 +197,10 @@ struct Constants {
         static let selectedState = "ВЫБРАНА"
         static let deselectedState = "ОТМЕНЕНА"
         
-        // Game buttons titles
         static let resetButtonTitle = "Reset"
         static let closeButtonTitle = "Close"
+        
+        static let topInfoLabelUnitsTitle = "Units:"
+        static let topInfoLabelBuildingsTitle = "Buildings:"
     }
 }
