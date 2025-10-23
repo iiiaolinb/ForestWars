@@ -142,7 +142,9 @@ class GameScreenVM {
     }
     
     func cellDoubleTapped(at row: Int, column: Int) {
-        
+//        let cell = gameField[row][column]
+//        let newUnitsCount = calculateFinalUnitCount(for: cell.buildings, currentCount: cell.number)
+//        delegate?.didUpdateCell(at: row, column: column, cellType: cell.type, number: newUnitsCount, buiding: cell.buildings, imageName: "")
         print("Двойной тап")
     }
     

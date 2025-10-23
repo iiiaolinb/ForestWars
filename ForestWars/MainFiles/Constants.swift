@@ -203,4 +203,11 @@ struct Constants {
         static let topInfoLabelUnitsTitle = "Units:"
         static let topInfoLabelBuildingsTitle = "Buildings:"
     }
+    
+    struct GameLogic {
+        static let upgradeCostFirst = 10
+        static let upgradeCostSecond = 20
+        static let incomeFirst = 2
+        static let incomeSecond = 4
+    }
 }

@@ -42,6 +42,12 @@ class CustomSquareButton: UIView {
         }
     }
     
+    var buildingLevel: Int = 0 {
+        didSet {
+            updateBuildingLevel()
+        }
+    }
+    
     var isSelected: Bool = false {
         didSet {
             updateAppearance()
@@ -190,9 +196,8 @@ class CustomSquareButton: UIView {
                 // Второй тап произошёл до таймера → двойное нажатие
                 timer.invalidate()
                 singleTapTimer = nil
-                if let delegate, !delegate.hasSelectedCells() {
-                    buttonDoubleTapped()
-                }
+                
+                isUpgradeAvailable() ? buttonDoubleTapped() : nil
             } else {
                 // Первый тап → ставим короткий таймер
                 singleTapTimer = Timer.scheduledTimer(withTimeInterval: Constants.Gesture.secondTapWaitingDuration, repeats: false) { [weak self] _ in
@@ -228,18 +233,7 @@ class CustomSquareButton: UIView {
     }
     
     func setBuidings(_ number: Int) {
-        switch number {
-        case 0:
-            buildingImageView1.isHidden = true
-            buildingImageView2.isHidden = true
-        case 1:
-            buildingImageView1.isHidden = false
-            buildingImageView2.isHidden = true
-        case 2:
-            buildingImageView1.isHidden = false
-            buildingImageView2.isHidden = false
-        default: break
-        }
+        setBuildingLevel(number)
     }
     
     func setImage(_ image: UIImage?) {
@@ -272,8 +266,33 @@ class CustomSquareButton: UIView {
     }
     
     private func buttonDoubleTapped() {
+        guard cellType != .neutral else { return }
         delegate?.customSquareButtonDoubleTapped(self)
         playDoubleTapExplosionAnimation()
+        let newBuildingLevel = buildingLevel + 1
+        setBuildingLevel(newBuildingLevel)
+        
+        let newUnitsCount = calculateFinalUnitCount(for: newBuildingLevel, currentCount: getNumber())
+        setNumberLabelText(newUnitsCount)
+    }
+    
+    private func setBuildingLevel(_ level: Int) {
+        buildingLevel = max(0, min(level, 2)) // защита от некорректных значений
+    }
+    
+    private func isUpgradeAvailable() -> Bool {
+        guard buildingLevel < 2 else { return false }
+        guard let delegate, !delegate.hasSelectedCells() else { return false }
+        
+        let units = getNumber()
+        switch buildingLevel {
+        case 0:
+            return units >= Constants.GameLogic.upgradeCostFirst
+        case 1:
+            return units >= Constants.GameLogic.upgradeCostSecond
+        default:
+            return false
+        }
     }
     
     private func updateAppearance() {
@@ -405,9 +424,39 @@ class CustomSquareButton: UIView {
         numberLabel.font = UIFont.boldSystemFont(ofSize: clampedFontSize)
     }
     
+    private func setNumberLabelText(_ number: Int) {
+        numberLabel.text = String(number)
+    }
+    
     private func setupBuildingImages() {
         let buildingImage = UIImage(systemName: Constants.BuildingStackConstants.iconName)?.withRenderingMode(.alwaysTemplate)
         buildingImageView1.image = buildingImage
         buildingImageView2.image = buildingImage
+    }
+    
+    private func updateBuildingLevel() {
+        switch buildingLevel {
+        case 0:
+            buildingImageView1.isHidden = true
+            buildingImageView2.isHidden = true
+        case 1:
+            buildingImageView1.isHidden = false
+            buildingImageView2.isHidden = true
+        case 2:
+            buildingImageView1.isHidden = false
+            buildingImageView2.isHidden = false
+        default:
+            buildingImageView1.isHidden = true
+            buildingImageView2.isHidden = true
+        }
+    }
+    
+    /// Вычисление итогового количества юнитов при апргрейде здания
+    private func calculateFinalUnitCount(for level: Int, currentCount: Int) -> Int {
+        switch level {
+        case 1: currentCount - Constants.GameLogic.upgradeCostFirst
+        case 2: currentCount - Constants.GameLogic.upgradeCostSecond
+        default: currentCount
+        }
     }
 }
