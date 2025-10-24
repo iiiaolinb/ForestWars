@@ -111,12 +111,8 @@ class GameScreenVC: UIViewController {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        updateUnitsInfo()
-        leftInfoStack.updateBuildings(count: 999)
-        rightInfoStack.updateBuildings(count: 999)
+        didUpdateInfoStack()
     }
-    
-    
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
@@ -136,6 +132,14 @@ class GameScreenVC: UIViewController {
         
         leftInfoStack.updateUnits(count: allyUnits)
         rightInfoStack.updateUnits(count: enemyUnits)
+    }
+    
+    private func updateBuildingsInfo() {
+        let allyUnits = viewModel.getTotalBuildings(of: .ally)
+        let enemyUnits = viewModel.getTotalBuildings(of: .enemy)
+        
+        leftInfoStack.updateBuildings(count: allyUnits)
+        rightInfoStack.updateBuildings(count: enemyUnits)
     }
     
     private func startGameFieldInitializationIfNeeded() {
@@ -175,6 +179,7 @@ extension GameScreenVC: GameScreenVMDelegate {
     func didUpdateCell(at row: Int, column: Int, cellType: CellType, number: Int, buiding: Int, imageName: String) {
         // Обновляем UI ячейки через GameFieldView
         if let cell = gameFieldView.getCell(at: row, column: column) {
+            
             cell.cellType = cellType
             cell.setNumber(number)
             cell.setBuidings(buiding)
@@ -192,9 +197,8 @@ extension GameScreenVC: GameScreenVMDelegate {
     }
     
     func didResetField() {
-        // Сбрасываем поле через GameFieldView
         gameFieldView.resetField()
-        updateUnitsInfo()
+        didUpdateInfoStack()
     }
     
     func didSelectCell(at row: Int, column: Int, cellType: CellType, number: Int, isSelected: Bool) {
@@ -216,6 +220,12 @@ extension GameScreenVC: GameScreenVMDelegate {
         }
     }
     
+    func didStartDoubleTapExplosionAnimation(at row: Int, column: Int) {
+        if let cell = gameFieldView.getCell(at: row, column: column) {
+            cell.playDoubleTapExplosionAnimation()
+        }
+    }
+    
     func didCompleteUnitMovement() {
         // Останавливаем анимацию на всех ячейках
         for row in 0..<Constants.GameField.gridHeight {
@@ -227,6 +237,11 @@ extension GameScreenVC: GameScreenVMDelegate {
         }
         
         // После завершения перемещения обновляем счётчики
+        didUpdateInfoStack()
+    }
+    
+    func didUpdateInfoStack() {
         updateUnitsInfo()
+        updateBuildingsInfo()
     }
 }

@@ -22,6 +22,8 @@ protocol GameScreenVMDelegate: AnyObject {
     func didUpdateSelectedCellsCount(_ count: Int)
     func didStartUnitMovementAnimation(at row: Int, column: Int)
     func didCompleteUnitMovement()
+    func didStartDoubleTapExplosionAnimation(at row: Int, column: Int)
+    func didUpdateInfoStack()
     
 }
 
@@ -142,19 +144,17 @@ class GameScreenVM {
     }
     
     func cellDoubleTapped(at row: Int, column: Int) {
-//        let cell = gameField[row][column]
-//        let newUnitsCount = calculateFinalUnitCount(for: cell.buildings, currentCount: cell.number)
-//        delegate?.didUpdateCell(at: row, column: column, cellType: cell.type, number: newUnitsCount, buiding: cell.buildings, imageName: "")
+        upgradeBuildings(in: row, column: column)
+        delegate?.didStartDoubleTapExplosionAnimation(at: row, column: column)
+        delegate?.didUpdateInfoStack()
         print("Двойной тап")
     }
     
-    /// Получение информации о ячейке
     func getCell(at row: Int, column: Int) -> GameCell? {
         guard isValidPosition(row: row, column: column) else { return nil }
         return gameField[row][column]
     }
     
-    /// Получение всех выбранных ячеек
     func getSelectedCells() -> [(row: Int, column: Int, cell: GameCell)] {
         var selectedCells: [(row: Int, column: Int, cell: GameCell)] = []
         
@@ -200,7 +200,6 @@ class GameScreenVM {
         return info
     }
     
-    /// Получение строкового представления типа ячейки
     private func getTypeString(for type: CellType) -> String {
         switch type {
         case .enemy:
@@ -212,36 +211,41 @@ class GameScreenVM {
         }
     }
     
-    /// Получение типа ячейки по строке и столбцу
     func getCellType(at row: Int, column: Int) -> CellType? {
         guard isValidPosition(row: row, column: column) else { return nil }
         return gameField[row][column].type
     }
     
-    /// Получение номера ячейки по строке и столбцу
     func getCellNumber(at row: Int, column: Int) -> Int? {
         guard isValidPosition(row: row, column: column) else { return nil }
         return gameField[row][column].number
     }
     
-    /// Получение имени изображения ячейки по строке и столбцу
     func getCellImageName(at row: Int, column: Int) -> String? {
         guard isValidPosition(row: row, column: column) else { return nil }
         return gameField[row][column].imageName
     }
     
-    /// Проверка, выбрана ли ячейка
     func isCellSelected(at row: Int, column: Int) -> Bool {
         guard isValidPosition(row: row, column: column) else { return false }
         return gameField[row][column].isSelected
     }
     
-    /// Возвращает общее количество юнитов заданного типа на поле
     func getTotalUnits(of type: CellType) -> Int {
         var total = 0
         for row in gameField {
             for cell in row where cell.type == type {
                 total += cell.number
+            }
+        }
+        return total
+    }
+    
+    func getTotalBuildings(of type: CellType) -> Int {
+        var total = 0
+        for row in gameField {
+            for cell in row where cell.type == type {
+                total += cell.buildings
             }
         }
         return total
@@ -511,6 +515,46 @@ class GameScreenVM {
                 at: cell.0,
                 column: cell.1,
                 isSelected: false)
+        }
+    }
+    
+    private func upgradeBuildings(in row: Int, column: Int) {
+        guard isValidPosition(row: row, column: column) else { return }
+        
+        let cell = gameField[row][column]
+        
+        // Вычисляем итоговое количество юнитов
+        let newBuildingsLevel = max(0, min(cell.buildings + 1, 2))
+        let newUnitsCount = calculateFinalUnitCount(for: newBuildingsLevel, currentCount: cell.number)
+        
+        // Обновляем целевую ячейку
+        let newTargetCell = GameCell(
+            type: cell.type,
+            number: newUnitsCount,
+            buildings: newBuildingsLevel,
+            imageName: getImageNameForCellType(cell.type),
+            isSelected: false
+        )
+        
+        gameField[row][column] = newTargetCell
+        
+        // Обновляем UI целевой ячейки
+        delegate?.didUpdateCell(
+            at: row,
+            column: column,
+            cellType: newTargetCell.type,
+            number: newTargetCell.number,
+            buiding: newTargetCell.buildings,
+            imageName: newTargetCell.imageName
+        )
+    }
+    
+    /// Вычисление итогового количества юнитов при апргрейде здания
+    private func calculateFinalUnitCount(for level: Int, currentCount: Int) -> Int {
+        switch level {
+        case 1: currentCount - Constants.GameLogic.upgradeCostFirst
+        case 2: currentCount - Constants.GameLogic.upgradeCostSecond
+        default: currentCount
         }
     }
 }

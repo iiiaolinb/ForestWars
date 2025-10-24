@@ -260,6 +260,47 @@ class CustomSquareButton: UIView {
         stopShakingAnimation()
     }
     
+    func playDoubleTapExplosionAnimation() {
+        // 🔸 Эмиттер частиц
+        let emitter = CAEmitterLayer()
+        emitter.emitterPosition = CGPoint(x: bounds.midX, y: bounds.midY)
+        emitter.emitterShape = .circle
+        emitter.emitterSize = CGSize(width: bounds.width * 0.1, height: bounds.height * 0.1)
+        
+        // 🔸 Конфигурация частиц
+        let cell = CAEmitterCell()
+        cell.contents = UIImage(systemName: "circle.fill")?.withRenderingMode(.alwaysTemplate).cgImage
+        cell.birthRate = 80
+        cell.lifetime = 0.4
+        cell.velocity = 150
+        cell.velocityRange = 50
+        cell.scale = 0.05
+        cell.scaleRange = 0.02
+        cell.alphaSpeed = -2.0
+        cell.emissionRange = .pi * 2
+        cell.color = cellType.textColor.cgColor
+
+        emitter.emitterCells = [cell]
+        layer.addSublayer(emitter)
+
+        // 🔸 Убираем слой через 0.4 сек
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            emitter.birthRate = 0
+            emitter.removeFromSuperlayer()
+        }
+
+        // 🔸 Дополнительная короткая "вспышка" ячейки
+        UIView.animate(withDuration: 0.1, animations: {
+            self.transform = CGAffineTransform(scaleX: 1.2, y: 1.2)
+            self.backgroundColor = self.cellType.textColor.withAlphaComponent(0.3)
+        }) { _ in
+            UIView.animate(withDuration: 0.2) {
+                self.transform = .identity
+                self.backgroundColor = Constants.Colors.buttonBackground
+            }
+        }
+    }
+    
     // MARK: - Private Methods
     private func buttonTapped() {
         delegate?.customSquareButtonTapped(self)
@@ -268,12 +309,6 @@ class CustomSquareButton: UIView {
     private func buttonDoubleTapped() {
         guard cellType != .neutral else { return }
         delegate?.customSquareButtonDoubleTapped(self)
-        playDoubleTapExplosionAnimation()
-        let newBuildingLevel = buildingLevel + 1
-        setBuildingLevel(newBuildingLevel)
-        
-        let newUnitsCount = calculateFinalUnitCount(for: newBuildingLevel, currentCount: getNumber())
-        setNumberLabelText(newUnitsCount)
     }
     
     private func setBuildingLevel(_ level: Int) {
@@ -375,47 +410,6 @@ class CustomSquareButton: UIView {
         layer.removeAnimation(forKey: "unitMovementShaking")
     }
     
-    private func playDoubleTapExplosionAnimation() {
-        // 🔸 Эмиттер частиц
-        let emitter = CAEmitterLayer()
-        emitter.emitterPosition = CGPoint(x: bounds.midX, y: bounds.midY)
-        emitter.emitterShape = .circle
-        emitter.emitterSize = CGSize(width: bounds.width * 0.1, height: bounds.height * 0.1)
-        
-        // 🔸 Конфигурация частиц
-        let cell = CAEmitterCell()
-        cell.contents = UIImage(systemName: "circle.fill")?.withRenderingMode(.alwaysTemplate).cgImage
-        cell.birthRate = 80
-        cell.lifetime = 0.4
-        cell.velocity = 150
-        cell.velocityRange = 50
-        cell.scale = 0.05
-        cell.scaleRange = 0.02
-        cell.alphaSpeed = -2.0
-        cell.emissionRange = .pi * 2
-        cell.color = cellType.textColor.cgColor
-
-        emitter.emitterCells = [cell]
-        layer.addSublayer(emitter)
-
-        // 🔸 Убираем слой через 0.4 сек
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            emitter.birthRate = 0
-            emitter.removeFromSuperlayer()
-        }
-
-        // 🔸 Дополнительная короткая "вспышка" ячейки
-        UIView.animate(withDuration: 0.1, animations: {
-            self.transform = CGAffineTransform(scaleX: 1.2, y: 1.2)
-            self.backgroundColor = self.cellType.textColor.withAlphaComponent(0.3)
-        }) { _ in
-            UIView.animate(withDuration: 0.2) {
-                self.transform = .identity
-                self.backgroundColor = Constants.Colors.buttonBackground
-            }
-        }
-    }
-    
     private func updateFontSize() {
         let buttonSize = min(bounds.width, bounds.height)
         let calculatedFontSize = buttonSize * Constants.Label.fontSizeMultiplier
@@ -448,15 +442,6 @@ class CustomSquareButton: UIView {
         default:
             buildingImageView1.isHidden = true
             buildingImageView2.isHidden = true
-        }
-    }
-    
-    /// Вычисление итогового количества юнитов при апргрейде здания
-    private func calculateFinalUnitCount(for level: Int, currentCount: Int) -> Int {
-        switch level {
-        case 1: currentCount - Constants.GameLogic.upgradeCostFirst
-        case 2: currentCount - Constants.GameLogic.upgradeCostSecond
-        default: currentCount
         }
     }
 }
