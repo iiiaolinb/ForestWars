@@ -112,9 +112,9 @@ class GameScreenVM {
         let hasSelectedCells = getSelectedCellsCount() > 0
         
         // Если ячейка neutral и нет выделенных ячеек - не разрешаем нажатие
-        if cell.type == .neutral && !hasSelectedCells {
-            return
-        }
+        guard !(cell.type == .neutral && !hasSelectedCells) else { return }
+        //если на ячейке нет юнитов, то ее нельзя выделить
+        guard cell.number > 0 else { return }
         
         // Проверяем возможность перемещения
         if let moveResult = canMove(to: row, column: column, hasSelectedCells: hasSelectedCells) {

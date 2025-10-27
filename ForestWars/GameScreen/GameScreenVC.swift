@@ -149,11 +149,14 @@ class GameScreenVC: UIViewController {
         
         // 1. Инициализируем игровое поле через ViewModel
         viewModel.initializeGameField()
-
+        
         // 2. Анимация появления всех ячеек
-        for row in 0..<Constants.GameField.gridHeight {
-            for column in 0..<Constants.GameField.gridWidth {
-                gameFieldView.addCellWithAppearAnimation(row: row, column: column)
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            for row in 0..<Constants.GameField.gridHeight {
+                for column in 0..<Constants.GameField.gridWidth {
+                    gameFieldView.addCellWithAppearAnimation(row: row, column: column)
+                }
             }
         }
     }
