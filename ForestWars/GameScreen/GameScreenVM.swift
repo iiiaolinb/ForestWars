@@ -114,7 +114,9 @@ class GameScreenVM {
         // Если ячейка neutral и нет выделенных ячеек - не разрешаем нажатие
         guard !(cell.type == .neutral && !hasSelectedCells) else { return }
         //если на ячейке нет юнитов, то ее нельзя выделить
-        guard cell.number > 0 else { return }
+        if !hasSelectedCells {
+            guard cell.number > 0 else { return }
+        }
         
         // Проверяем возможность перемещения
         if let moveResult = canMove(to: row, column: column, hasSelectedCells: hasSelectedCells) {
@@ -252,6 +254,11 @@ class GameScreenVM {
     }
     
     // MARK: - Private Methods
+    
+    private func isCurrentSelectedCellEqualTo(row: Int, column: Int) -> Bool {
+        guard let currentSelectedCellPosition else { return false }
+        return currentSelectedCellPosition.row == row && currentSelectedCellPosition.column == column
+    }
     
     /// Проверка возможности перемещения
     private func canMove(to row: Int, column: Int, hasSelectedCells: Bool) -> MoveResult? {

@@ -17,6 +17,7 @@ class GameScreenVC: UIViewController {
     //MARK: - UI elements
     
     private let leftInfoStack = TopInfoLabelAssistent(infoLabelType: .ally)
+    private let centerTimer = TopTimerAssistent()
     private let rightInfoStack = TopInfoLabelAssistent(infoLabelType: .enemy)
     
     private let resetButton: ButtonAssistent = {
@@ -42,6 +43,7 @@ class GameScreenVC: UIViewController {
     // MARK: - Setup
     private func setupViewModel() {
         viewModel.delegate = self
+        centerTimer.delegate = self
     }
     
     private func setupUI() {
@@ -54,12 +56,14 @@ class GameScreenVC: UIViewController {
         closeButton.addTarget(self, action: #selector(closeButtonTapped), for: .touchUpInside)
         
         view.addSubview(leftInfoStack)
+        view.addSubview(centerTimer)
         view.addSubview(rightInfoStack)
         view.addSubview(gameFieldView)
         view.addSubview(resetButton)
         view.addSubview(closeButton)
         
         leftInfoStack.translatesAutoresizingMaskIntoConstraints = false
+        centerTimer.translatesAutoresizingMaskIntoConstraints = false
         rightInfoStack.translatesAutoresizingMaskIntoConstraints = false
         
         // Constraints
@@ -68,6 +72,11 @@ class GameScreenVC: UIViewController {
             leftInfoStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: Constants.InfoLabel.horizontalMargin),
             leftInfoStack.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 1/3),
             leftInfoStack.heightAnchor.constraint(equalToConstant: Constants.InfoLabel.height),
+            
+            centerTimer.topAnchor.constraint(equalTo: view.topAnchor, constant: Constants.InfoLabel.topMargin),
+            centerTimer.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            centerTimer.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.25),
+            centerTimer.heightAnchor.constraint(equalToConstant: Constants.InfoLabel.height),
             
             rightInfoStack.topAnchor.constraint(equalTo: view.topAnchor, constant: Constants.InfoLabel.topMargin),
             rightInfoStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -Constants.InfoLabel.horizontalMargin),
@@ -102,6 +111,24 @@ class GameScreenVC: UIViewController {
         dismiss(animated: true)
     }
     
+    // MARK: - Timer Management
+    
+    /// Запускает таймер с заданным временем
+    /// - Parameter timeInSeconds: Время в секундах для отсчета
+    func startGameTimer(timeInSeconds: TimeInterval) {
+        centerTimer.startTimer(timeInSeconds: timeInSeconds)
+    }
+    
+    /// Останавливает таймер
+    func stopGameTimer() {
+        centerTimer.stopTimer()
+    }
+    
+    /// Сбрасывает таймер на начальное значение
+    func resetGameTimer() {
+        centerTimer.resetTimer()
+    }
+    
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -112,6 +139,9 @@ class GameScreenVC: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         didUpdateInfoStack()
+        
+        // Запускаем таймер на 30 секунд для демонстрации
+        startGameTimer(timeInSeconds: 30)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -246,5 +276,22 @@ extension GameScreenVC: GameScreenVMDelegate {
     func didUpdateInfoStack() {
         updateUnitsInfo()
         updateBuildingsInfo()
+    }
+}
+
+// MARK: - TopTimerAssistentDelegate
+extension GameScreenVC: TopTimerAssistentDelegate {
+    func timerDidFinish() {
+        print("GameScreenVC: Таймер завершился!")
+        // Здесь можно добавить логику завершения игры
+        // Например, показать алерт или перейти к экрану результатов
+    }
+    
+    func timerDidUpdate(remainingTime: TimeInterval) {
+        // Здесь можно добавить дополнительную логику при обновлении таймера
+        // Например, обновление UI или проверка условий игры
+        if remainingTime <= 10 {
+            print("GameScreenVC: Осталось \(Int(remainingTime)) секунд!")
+        }
     }
 }
