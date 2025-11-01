@@ -40,6 +40,16 @@ class GameScreenVC: UIViewController {
         return button
     }()
     
+    private let nextTurnButton: ButtonAssistent = {
+        let button = ButtonAssistent(
+            title: Constants.Text.nextButtonTitle,
+            imageName: Constants.SystemImages.nextIcon,
+            color: Constants.Colors.nextButtonColor
+        )
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
     // MARK: - Setup
     private func setupViewModel() {
         viewModel.delegate = self
@@ -54,12 +64,14 @@ class GameScreenVC: UIViewController {
         
         resetButton.addTarget(self, action: #selector(resetButtonTapped), for: .touchUpInside)
         closeButton.addTarget(self, action: #selector(closeButtonTapped), for: .touchUpInside)
+        nextTurnButton.addTarget(self, action: #selector(nextButtonTapped), for: .touchUpInside)
         
         view.addSubview(leftInfoStack)
         view.addSubview(centerTimer)
         view.addSubview(rightInfoStack)
         view.addSubview(gameFieldView)
         view.addSubview(resetButton)
+        view.addSubview(nextTurnButton)
         view.addSubview(closeButton)
         
         leftInfoStack.translatesAutoresizingMaskIntoConstraints = false
@@ -92,12 +104,15 @@ class GameScreenVC: UIViewController {
             // Кнопки под полем в одну линию
             resetButton.topAnchor.constraint(equalTo: gameFieldView.bottomAnchor, constant: Constants.GameButtons.topMargin),
             resetButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: Constants.GameButtons.horizontalMargin),
-            resetButton.widthAnchor.constraint(equalToConstant: Constants.GameButtons.width),
+            resetButton.widthAnchor.constraint(equalToConstant: Constants.GameButtons.size(forButtonsInRow: 3).width),
             
-            // Кнопка закрытия справа от кнопки сброса
+            nextTurnButton.topAnchor.constraint(equalTo: gameFieldView.bottomAnchor, constant: Constants.GameButtons.topMargin),
+            nextTurnButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            nextTurnButton.widthAnchor.constraint(equalToConstant: Constants.GameButtons.size(forButtonsInRow: 3).width),
+
             closeButton.topAnchor.constraint(equalTo: gameFieldView.bottomAnchor, constant: Constants.GameButtons.topMargin),
             closeButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -Constants.GameButtons.horizontalMargin),
-            closeButton.widthAnchor.constraint(equalToConstant: Constants.GameButtons.width)
+            closeButton.widthAnchor.constraint(equalToConstant: Constants.GameButtons.size(forButtonsInRow: 3).width)
         ])
     }
     
@@ -109,6 +124,11 @@ class GameScreenVC: UIViewController {
     
     @objc private func closeButtonTapped() {
         dismiss(animated: true)
+    }
+    
+    @objc private func nextButtonTapped() {
+        //viewModel.resetField()
+        print("Next turn!")
     }
     
     // MARK: - Timer Management

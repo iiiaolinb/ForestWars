@@ -89,6 +89,7 @@ struct Constants {
         // Game buttons colors
         static let resetButtonColor = UIColor.systemOrange
         static let closeButtonColor = UIColor.systemRed
+        static let nextButtonColor = UIColor.systemPink
     }
     
     // MARK: - Glow Effect Properties
@@ -129,6 +130,7 @@ struct Constants {
         // Game buttons icons
         static let resetIcon = "arrow.clockwise"
         static let closeIcon = "xmark.circle.fill"
+        static let nextIcon = "arrow.forward"
         
         // Top info label icons
         static let infoLabelIconLeft = "square.grid.3x3.fill"
@@ -150,10 +152,19 @@ struct Constants {
     
     // MARK: - Game Buttons Properties
     struct GameButtons {
-        static let width: CGFloat = 150
+        static let width: CGFloat = 100
         static let height: CGFloat = 50
         static let topMargin: CGFloat = 20
-        static let horizontalMargin: CGFloat = 40
+        static let horizontalMargin: CGFloat = 30
+        
+        static func size(forButtonsInRow count: Int, screenWidth: CGFloat = UIScreen.main.bounds.width) -> CGSize {
+            guard count > 0 else { return CGSize(width: width, height: height) }
+            let totalHorizontalMargins = horizontalMargin * 2
+            let spacing: CGFloat = 10
+            let availableWidth = screenWidth - totalHorizontalMargins - CGFloat(count - 1) * spacing
+            let buttonWidth = max(availableWidth / CGFloat(count), 50)
+            return CGSize(width: buttonWidth, height: height)
+        }
     }
     
     // MARK: - Game Field Properties
@@ -199,6 +210,7 @@ struct Constants {
         
         static let resetButtonTitle = "Reset"
         static let closeButtonTitle = "Close"
+        static let nextButtonTitle = "Next"
         
         static let topInfoLabelUnitsTitle = "Units:"
         static let topInfoLabelBuildingsTitle = "Buildings:"

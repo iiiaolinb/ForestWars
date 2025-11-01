@@ -26,88 +26,84 @@ class ButtonAssistent: UIButton {
     // MARK: - Setup
     private func setupButton(title: String, imageName: String) {
         if #available(iOS 26.0, *) {
-            setupLiquidGlassButton(title: title, imageName: imageName)
+            setupGlassButton(title: title, imageName: imageName)
         } else {
             setupFallbackButton(title: title, imageName: imageName)
         }
         
-        // Общие настройки
         heightAnchor.constraint(equalToConstant: Constants.Button.height).isActive = true
         
-        // Настройка эффекта нажатия
         addTarget(self, action: #selector(buttonPressed), for: .touchDown)
         addTarget(self, action: #selector(buttonReleased), for: [.touchUpInside, .touchUpOutside, .touchCancel])
     }
     
     @available(iOS 26.0, *)
-    private func setupLiquidGlassButton(title: String, imageName: String) {
-        // Используем новый нативный glass стиль для iOS 26.0+
-        // Этот стиль предоставляет встроенный liquid glass эффект
+    private func setupGlassButton(title: String, imageName: String) {
         var config = UIButton.Configuration.glass()
         config.cornerStyle = .medium
+        config.image = UIImage(systemName: imageName)
+        config.imagePlacement = .leading
+        config.imagePadding = 8
         config.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16)
         
-        // Настройка цвета фона если указан
         if let color = buttonColor {
             config.background.backgroundColor = color.withAlphaComponent(0.8)
         }
         
-        // Настройка иконки
-        config.image = UIImage(systemName: imageName)
-        config.imagePlacement = .leading
-        config.imagePadding = 8
-        
-        // Настройка текста
         config.title = title
         config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
             var outgoing = incoming
-            outgoing.font = Constants.Button.font
-            if let color = self.buttonColor {
-                outgoing.foregroundColor = .white
-            }
+            outgoing.font = UIFontMetrics(forTextStyle: .body).scaledFont(for: Constants.Button.font)
+            
+            let paragraph = NSMutableParagraphStyle()
+            paragraph.lineBreakMode = .byTruncatingTail
+            outgoing.paragraphStyle = paragraph
+            
+            outgoing.foregroundColor = .label
             return outgoing
         }
         
-        // Применение конфигурации
         self.configuration = config
     }
     
     private func setupFallbackButton(title: String, imageName: String) {
-        // Fallback для версий iOS ниже 26.0
-        // Имитируем liquid glass эффект с помощью blur и полупрозрачности
         var config = UIButton.Configuration.filled()
         config.cornerStyle = .medium
-        
-        // Настройка цвета фона если указан
-        if let color = buttonColor {
-            config.background.backgroundColor = color
-        } else {
-            config.background.backgroundColor = UIColor.systemFill
-            config.background.visualEffect = UIBlurEffect(style: .systemUltraThinMaterial)
-        }
-        
-        config.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16)
-        
-        // Настройка иконки
         config.image = UIImage(systemName: imageName)
         config.imagePlacement = .leading
         config.imagePadding = 8
+        config.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16)
         
-        // Настройка текста
+        if let color = buttonColor {
+            config.background.backgroundColor = color
+        } else {
+            config.background.visualEffect = UIBlurEffect(style: .systemUltraThinMaterial)
+        }
+        
         config.title = title
         config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
             var outgoing = incoming
             outgoing.font = Constants.Button.font
-            if let color = self.buttonColor {
-                outgoing.foregroundColor = .white
-            }
+            outgoing.foregroundColor = .label
             return outgoing
         }
         
-        // Применение конфигурации
         self.configuration = config
     }
     
+    // MARK: - Layout fix (главный секрет)
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        
+        // UIKit пересоздаёт titleLabel при смене состояния — переустанавливаем параметры каждый раз
+        if let label = titleLabel {
+            label.numberOfLines = 1
+            label.adjustsFontSizeToFitWidth = true
+            label.minimumScaleFactor = 0.7
+            label.lineBreakMode = .byTruncatingTail
+            label.baselineAdjustment = .alignCenters
+        }
+    }
     
     // MARK: - Actions
     @objc private func buttonPressed() {
