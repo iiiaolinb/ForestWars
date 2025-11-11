@@ -91,6 +91,19 @@ class ButtonAssistent: UIButton {
         self.configuration = config
     }
     
+    //MARK: - Public
+    
+    func reloadButtonForPlayerTurn(_ isPlayerTurn: Bool) {
+        let title = isPlayerTurn ? Constants.Text.nextButtonTitle : Constants.Text.waitingButtonTitle
+        let imageName = isPlayerTurn ? Constants.SystemImages.nextIcon : Constants.SystemImages.waitingIcon
+        if #available(iOS 26.0, *) {
+            setupGlassButton(title: title, imageName: imageName)
+        } else {
+            setupFallbackButton(title: title, imageName: imageName)
+        }
+        isEnabled = isPlayerTurn
+    }
+    
     // MARK: - Layout fix (главный секрет)
     override func layoutSubviews() {
         super.layoutSubviews()

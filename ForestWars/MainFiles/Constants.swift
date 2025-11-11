@@ -131,6 +131,7 @@ struct Constants {
         static let resetIcon = "arrow.clockwise"
         static let closeIcon = "xmark.circle.fill"
         static let nextIcon = "arrow.forward"
+        static let waitingIcon = "hourglass.bottomhalf.fill"
         
         // Top info label icons
         static let infoLabelIconLeft = "square.grid.3x3.fill"
@@ -211,6 +212,7 @@ struct Constants {
         static let resetButtonTitle = "Reset"
         static let closeButtonTitle = "Close"
         static let nextButtonTitle = "Next"
+        static let waitingButtonTitle = "Wait"
         
         static let topInfoLabelUnitsTitle = "Units:"
         static let topInfoLabelBuildingsTitle = "Buildings:"
@@ -221,5 +223,6 @@ struct Constants {
         static let upgradeCostSecond = 20
         static let incomeFirst = 2
         static let incomeSecond = 4
+        static let timePeriod: TimeInterval = 6 //seconds
     }
 }

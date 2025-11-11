@@ -179,6 +179,16 @@ final class TopTimerAssistent: UIView {
         // Вычисляем оставшееся время
         let newRemainingTime = max(0, initialTime - elapsedTime)
         
+        // Проверяем завершение таймера до обновления отображения
+        if newRemainingTime <= 0 && remainingTime > 0 {
+            remainingTime = 0
+            updateTimerDisplay()
+            stopTimer()
+            delegate?.timerDidUpdate(remainingTime: 0)
+            delegate?.timerDidFinish()
+            return
+        }
+        
         // Обновляем только если время изменилось на целую секунду
         let oldSeconds = Int(remainingTime)
         let newSeconds = Int(newRemainingTime)
@@ -187,11 +197,6 @@ final class TopTimerAssistent: UIView {
             remainingTime = newRemainingTime
             updateTimerDisplay()
             delegate?.timerDidUpdate(remainingTime: remainingTime)
-            
-            if remainingTime <= 0 {
-                stopTimer()
-                delegate?.timerDidFinish()
-            }
         }
     }
     

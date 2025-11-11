@@ -160,8 +160,7 @@ class GameScreenVC: UIViewController {
         super.viewDidAppear(animated)
         didUpdateInfoStack()
         
-        // Запускаем таймер на 30 секунд для демонстрации
-        startGameTimer(timeInSeconds: 30)
+        startGameTimer(timeInSeconds: Constants.GameLogic.timePeriod)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -209,6 +208,15 @@ class GameScreenVC: UIViewController {
                 }
             }
         }
+    }
+    
+    private func nextTurn() {
+        viewModel.addUnitsToBuildings()
+        updateUnitsInfo()
+        viewModel.toggleNextTurn()
+        nextTurnButton.reloadButtonForPlayerTurn(viewModel.isMyTurn)
+        viewModel.deselectAllCells()
+        centerTimer.startTimer(timeInSeconds: Constants.GameLogic.timePeriod)
     }
 }
 
@@ -303,15 +311,16 @@ extension GameScreenVC: GameScreenVMDelegate {
 extension GameScreenVC: TopTimerAssistentDelegate {
     func timerDidFinish() {
         print("GameScreenVC: Таймер завершился!")
-        // Здесь можно добавить логику завершения игры
-        // Например, показать алерт или перейти к экрану результатов
+
+        nextTurn()
     }
     
     func timerDidUpdate(remainingTime: TimeInterval) {
         // Здесь можно добавить дополнительную логику при обновлении таймера
         // Например, обновление UI или проверка условий игры
-        if remainingTime <= 10 {
+        if remainingTime == 10 || remainingTime == 5  {
             print("GameScreenVC: Осталось \(Int(remainingTime)) секунд!")
         }
     }
 }
+

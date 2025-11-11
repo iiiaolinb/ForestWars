@@ -40,6 +40,12 @@ class GameScreenVM {
     // Отслеживание центральной выбранной ячейки
     private var currentSelectedCellPosition: (row: Int, column: Int)?
     
+    var isMyTurn: Bool = true {
+        willSet {
+            print("GameScreenVM: ход \(newValue ? "игрока" : "соперника")")
+        }
+    }
+    
     // MARK: - Initialization
     init() {
         // Инициализация будет вызвана из GameScreenVC после настройки UI
@@ -157,6 +163,11 @@ class GameScreenVM {
         return gameField[row][column]
     }
     
+    func updateCell(at row: Int, column: Int, with cell: GameCell) {
+        guard isValidPosition(row: row, column: column) else { return }
+        gameField[row][column] = cell
+    }
+    
     func getSelectedCells() -> [(row: Int, column: Int, cell: GameCell)] {
         var selectedCells: [(row: Int, column: Int, cell: GameCell)] = []
         
@@ -251,6 +262,64 @@ class GameScreenVM {
             }
         }
         return total
+    }
+    
+    func getAllCellsWithBuildings() -> [(row: Int, column: Int, buildings: Int)] {
+        var cells: [(row: Int, column: Int, buildings: Int)] = []
+        for rowIndex in 0..<gridHeight {
+            for colIndex in 0..<gridWidth {
+                let cell = gameField[rowIndex][colIndex]
+                if cell.buildings > 0 {
+                    if isMyTurn && cell.type == .ally {
+                        cells.append((row: rowIndex, column: colIndex, buildings: cell.buildings))
+                    } else if !isMyTurn && cell.type == .enemy {
+                        cells.append((row: rowIndex, column: colIndex, buildings: cell.buildings))
+                    }
+                }
+            }
+        }
+        return cells
+    }
+    
+    func deselectAllCells() {
+        currentSelectedCellPosition = nil
+        
+        for row in 0..<gridHeight {
+            for column in 0..<gridWidth {
+                if gameField[row][column].isSelected {
+                    gameField[row][column].isSelected = false
+                    delegate?.didUpdateCellSelection(at: row, column: column, isSelected: false)
+                }
+            }
+        }
+    }
+    
+    func toggleNextTurn() {
+        isMyTurn.toggle()
+    }
+    
+    func addUnitsToBuildings() {
+        let cellsWithBuildings = getAllCellsWithBuildings()
+        for (row, column, buildings) in cellsWithBuildings {
+            guard let cell = getCell(at: row, column: column) else { continue }
+            let newNumber = cell.number + buildings
+            let updatedCell = GameCell(
+                type: cell.type,
+                number: newNumber,
+                buildings: cell.buildings,
+                imageName: cell.imageName,
+                isSelected: cell.isSelected
+            )
+            updateCell(at: row, column: column, with: updatedCell)
+            delegate?.didUpdateCell(
+                at: row,
+                column: column,
+                cellType: updatedCell.type,
+                number: updatedCell.number,
+                buiding: updatedCell.buildings,
+                imageName: updatedCell.imageName
+            )
+        }
     }
     
     // MARK: - Private Methods
@@ -393,21 +462,6 @@ class GameScreenVM {
         }
         
         return neighbors
-    }
-    
-    /// Снятие выбора со всех ячеек
-    private func deselectAllCells() {
-        // Сбрасываем позицию центральной ячейки
-        currentSelectedCellPosition = nil
-        
-        for row in 0..<gridHeight {
-            for column in 0..<gridWidth {
-                if gameField[row][column].isSelected {
-                    gameField[row][column].isSelected = false
-                    delegate?.didUpdateCellSelection(at: row, column: column, isSelected: false)
-                }
-            }
-        }
     }
     
     /// Обновление количества выбранных ячеек
@@ -564,4 +618,6 @@ class GameScreenVM {
         default: currentCount
         }
     }
+    
+
 }
