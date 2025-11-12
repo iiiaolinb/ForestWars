@@ -223,6 +223,6 @@ struct Constants {
         static let upgradeCostSecond = 20
         static let incomeFirst = 2
         static let incomeSecond = 4
-        static let timePeriod: TimeInterval = 6 //seconds
+        static let timePeriod: TimeInterval = 20 //seconds
     }
 }

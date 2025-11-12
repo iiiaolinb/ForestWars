@@ -113,6 +113,7 @@ class GameScreenVM {
     /// Обработка нажатия на ячейку
     func cellTapped(at row: Int, column: Int) {
         guard isValidPosition(row: row, column: column) else { return }
+        guard isValidTurnsCell(row: row, column: column) else { return }
         
         let cell = gameField[row][column]
         let hasSelectedCells = getSelectedCellsCount() > 0
@@ -152,6 +153,7 @@ class GameScreenVM {
     }
     
     func cellDoubleTapped(at row: Int, column: Int) {
+        guard isValidTurnsCell(row: row, column: column) else { return }
         upgradeBuildings(in: row, column: column)
         delegate?.didStartDoubleTapExplosionAnimation(at: row, column: column)
         delegate?.didUpdateInfoStack()
@@ -359,18 +361,26 @@ class GameScreenVM {
         return nil
     }
     
-    /// Проверка валидности позиции
     private func isValidPosition(row: Int, column: Int) -> Bool {
         return row >= 0 && row < gridHeight && column >= 0 && column < gridWidth
     }
     
-    /// Получение случайного типа ячейки
+    private func isValidTurnsCell(row: Int, column: Int) -> Bool {
+        if currentSelectedCellPosition == nil {
+            let cell = getCell(at: row, column: column)
+            if (isMyTurn && cell?.type == .ally) || (!isMyTurn && cell?.type == .enemy) {
+                return true
+            }
+            return false
+        }
+        return true
+    }
+    
     private func getRandomCellType() -> CellType {
         let types: [CellType] = [.enemy, .ally, .neutral]
         return types.randomElement() ?? .neutral
     }
     
-    /// Получение номера для типа ячейки
     private func getNumberForCellType(_ type: CellType) -> Int {
         switch type {
         case .enemy:
@@ -382,7 +392,6 @@ class GameScreenVM {
         }
     }
     
-    /// Получение имени изображения для типа ячейки
     private func getImageNameForCellType(_ type: CellType) -> String {
         switch type {
         case .enemy:

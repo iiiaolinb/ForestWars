@@ -123,12 +123,13 @@ class GameScreenVC: UIViewController {
     }
     
     @objc private func closeButtonTapped() {
+        print("Close button tapped!")
         dismiss(animated: true)
     }
     
     @objc private func nextButtonTapped() {
-        //viewModel.resetField()
         print("Next turn!")
+        nextTurn()
     }
     
     // MARK: - Timer Management
@@ -196,10 +197,11 @@ class GameScreenVC: UIViewController {
         isGameFieldInitialized = true
         print("[GameScreenVC] Grid is ready — initializing ViewModel")
         
-        // 1. Инициализируем игровое поле через ViewModel
         viewModel.initializeGameField()
-        
-        // 2. Анимация появления всех ячеек
+        addCellWithAppearAnimation()
+    }
+    
+    private func addCellWithAppearAnimation() {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             for row in 0..<Constants.GameField.gridHeight {
