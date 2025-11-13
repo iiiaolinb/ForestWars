@@ -140,8 +140,8 @@ struct Constants {
     
     // MARK: - Cell Type Properties
     struct CellType {
-        static let enemyNumber = 99
-        static let allyNumber = 42
+        static let enemyNumber = 30
+        static let allyNumber = 30
         static let neutralNumber = 15
     }
     
@@ -170,8 +170,8 @@ struct Constants {
     
     // MARK: - Game Field Properties
     struct GameField {
-        static let gridWidth: Int = 5
-        static let gridHeight: Int = 10
+        static let gridWidth: Int = 4
+        static let gridHeight: Int = 8
         static let cellSpacing: CGFloat = 8
         static let fieldMargin: CGFloat = 20
         
@@ -224,5 +224,6 @@ struct Constants {
         static let incomeFirst = 2
         static let incomeSecond = 4
         static let timePeriod: TimeInterval = 20 //seconds
+        static let startBuildingCount: Int = 6
     }
 }

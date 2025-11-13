@@ -53,7 +53,7 @@ class GameScreenVM {
     
     // MARK: - Public Methods
     
-    /// Инициализация игрового поля
+    /// Инициализация игрового поля по правилам
     func initializeGameField() {
         print("GameScreenVM: Инициализация игрового поля...")
         gameField = []
@@ -61,48 +61,24 @@ class GameScreenVM {
         for row in 0..<gridHeight {
             var rowCells: [GameCell] = []
             for column in 0..<gridWidth {
-                let cellType = getRandomCellType()
-                let number = getNumberForCellType(cellType)
-                let buildings = Int.random(in: 0...2)
-                let imageName = getImageNameForCellType(cellType)
-                
-                let cell = GameCell(
-                    type: cellType,
-                    number: number,
-                    buildings: buildings,
-                    imageName: imageName,
-                    isSelected: false
-                )
-                
+                let cell = createCellForPosition(row: row, column: column)
                 rowCells.append(cell)
-                delegate?.didUpdateCell(at: row, column: column, cellType: cellType, number: number, buiding: buildings, imageName: imageName)
+                updateDelegateForCell(cell, row: row, column: column)
             }
             gameField.append(rowCells)
         }
-        print("GameScreenVM: Игровое поле инициализировано")
     }
     
-    /// Сброс игрового поля
+    /// Сброс игрового поля по правилам
     func resetField() {
-        // Сначала снимаем выбор со всех ячеек
+        print("GameScreenVM: Сброс игрового поля...")
         deselectAllCells()
         
         for row in 0..<gridHeight {
             for column in 0..<gridWidth {
-                let cellType = getRandomCellType()
-                let number = getNumberForCellType(cellType)
-                let buildings = Int.random(in: 0...2)
-                let imageName = getImageNameForCellType(cellType)
-                
-                gameField[row][column] = GameCell(
-                    type: cellType,
-                    number: number,
-                    buildings: buildings,
-                    imageName: imageName,
-                    isSelected: false
-                )
-                
-                delegate?.didUpdateCell(at: row, column: column, cellType: cellType, number: number, buiding: buildings, imageName: imageName)
+                let cell = createCellForPosition(row: row, column: column)
+                gameField[row][column] = cell
+                updateDelegateForCell(cell, row: row, column: column)
             }
         }
         
@@ -304,7 +280,8 @@ class GameScreenVM {
         let cellsWithBuildings = getAllCellsWithBuildings()
         for (row, column, buildings) in cellsWithBuildings {
             guard let cell = getCell(at: row, column: column) else { continue }
-            let newNumber = cell.number + buildings
+            let unitsToAdd = getUnitsToAdd(for: buildings)
+            let newNumber = cell.number + unitsToAdd
             let updatedCell = GameCell(
                 type: cell.type,
                 number: newNumber,
@@ -326,12 +303,116 @@ class GameScreenVM {
     
     // MARK: - Private Methods
     
+    /// Создание новой ячейки по координатам с учётом правил
+    private func createCellForPosition(row: Int, column: Int) -> GameCell {
+        let startBuildings = Constants.GameLogic.startBuildingCount
+        let centerColumn = gridWidth / 2
+        
+        var cellType: CellType = .neutral
+        var number = getNumberForCellType(cellType)
+        var buildings = 0
+        
+        // Верхний край — enemy
+        if isEnemyCell(row: row, column: column, centerColumn: centerColumn, startBuildings: startBuildings) {
+            cellType = .enemy
+            number = Constants.CellType.enemyNumber
+            buildings = 1
+        }
+        // Нижний край — ally
+        else if isAllyCell(row: row, column: column, centerColumn: centerColumn, startBuildings: startBuildings) {
+            cellType = .ally
+            number = Constants.CellType.allyNumber
+            buildings = 1
+        }
+        
+        let imageName = getImageNameForCellType(cellType)
+        return GameCell(
+            type: cellType,
+            number: number,
+            buildings: buildings,
+            imageName: imageName,
+            isSelected: false
+        )
+    }
+    
+    /// Проверка, является ли ячейка ячейкой врага
+    private func isEnemyCell(row: Int, column: Int, centerColumn: Int, startBuildings: Int) -> Bool {
+        if startBuildings <= gridWidth {
+            // Влезает в одну строку
+            let range = getBuildingColumns(center: centerColumn, count: startBuildings)
+            return row == 0 && range.contains(column)
+        } else {
+            // Переполнение — вторая строка
+            let totalInFirstRow = gridWidth
+            let remaining = startBuildings - totalInFirstRow
+            
+            if row == 0 { return true } // вся первая строка
+            if row == 1 {
+                let range = getBuildingColumns(center: centerColumn, count: remaining)
+                return range.contains(column)
+            }
+            return false
+        }
+    }
+    
+    /// Проверка, является ли ячейка ячейкой союзника
+    private func isAllyCell(row: Int, column: Int, centerColumn: Int, startBuildings: Int) -> Bool {
+        if startBuildings <= gridWidth {
+            let range = getBuildingColumns(center: centerColumn, count: startBuildings)
+            return row == gridHeight - 1 && range.contains(column)
+        } else {
+            let totalInFirstRow = gridWidth
+            let remaining = startBuildings - totalInFirstRow
+            
+            if row == gridHeight - 1 { return true } // вся последняя строка
+            if row == gridHeight - 2 {
+                let range = getBuildingColumns(center: centerColumn, count: remaining)
+                return range.contains(column)
+            }
+            return false
+        }
+    }
+    
+    /// Возвращает набор индексов колонок, где должны стоять здания по центру
+    private func getBuildingColumns(center: Int, count: Int) -> [Int] {
+        guard count > 0 else { return [] }
+        
+        var result: [Int] = [center]
+        var left = center - 1
+        var right = center + 1
+        
+        while result.count < count {
+            if left >= 0 {
+                result.append(left)
+                if result.count == count { break }
+            }
+            if right < gridWidth {
+                result.append(right)
+                if result.count == count { break }
+            }
+            left -= 1
+            right += 1
+        }
+        return result.sorted()
+    }
+    
+    /// Уведомление делегата об обновлении ячейки
+    private func updateDelegateForCell(_ cell: GameCell, row: Int, column: Int) {
+        delegate?.didUpdateCell(
+            at: row,
+            column: column,
+            cellType: cell.type,
+            number: cell.number,
+            buiding: cell.buildings,
+            imageName: cell.imageName
+        )
+    }
+    
     private func isCurrentSelectedCellEqualTo(row: Int, column: Int) -> Bool {
         guard let currentSelectedCellPosition else { return false }
         return currentSelectedCellPosition.row == row && currentSelectedCellPosition.column == column
     }
     
-    /// Проверка возможности перемещения
     private func canMove(to row: Int, column: Int, hasSelectedCells: Bool) -> MoveResult? {
         guard hasSelectedCells else { return nil }
         
@@ -384,9 +465,9 @@ class GameScreenVM {
     private func getNumberForCellType(_ type: CellType) -> Int {
         switch type {
         case .enemy:
-            return Int.random(in: 1...99)//Constants.CellType.enemyNumber
+            return Constants.CellType.enemyNumber
         case .ally:
-            return Int.random(in: 1...99)//Constants.CellType.allyNumber
+            return Constants.CellType.allyNumber
         case .neutral:
             return Int.random(in: 1...99)
         }
@@ -628,5 +709,13 @@ class GameScreenVM {
         }
     }
     
-
+    private func getUnitsToAdd(for level: Int) -> Int {
+        switch level {
+        case 1: Constants.GameLogic.incomeFirst
+        case 2: Constants.GameLogic.incomeSecond
+        default: 0
+        }
+    }
 }
+
+    //  сделать нормальное распределение строений и юнитов на поле
